@@ -1,4 +1,0 @@
-# Copie este arquivo para .env e coloque suas credenciais
-MP_ACCESS_TOKEN=TEST-1234567890abcdef
-# Exemplo de token de sandbox: use as credenciais do Mercado Pago sandbox
-# MP_ACCESS_TOKEN_ALT=TEST-outro-token-de-exemplo

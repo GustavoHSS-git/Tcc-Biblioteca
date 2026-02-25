@@ -1,6 +1,0 @@
-# Coloque seu token do Mercado Pago (sandbox ou produção) no formato abaixo
-# Exemplo de sandbox: TEST-1234567890abcdef
-MP_ACCESS_TOKEN=TEST-2506783482072783-122110-babf5a52b54750334e4f3034271b17a9-583771665
-
-# (Opcional) variável alternativa para testes
-# MP_ACCESS_TOKEN_ALT=
