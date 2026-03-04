@@ -1,7 +1,24 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const axios = require('axios');
 require('dotenv').config();
+
+// cliente do Supabase (conexão global)
+const supabase = require('./supabase');
+
+async function testarConexao() {
+  const { data, error } = await supabase.from('perfil').select('*').limit(1);
+
+  if (error) {
+    console.error('❌ Erro ao conectar ao Supabase:', error.message);
+  } else {
+    console.log('✅ Conexão com o Supabase estabelecida com sucesso!');
+  }
+}
+
+testarConexao();
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,294 +38,242 @@ app.use('/loja', express.static(path.join(__dirname, 'loja')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 app.use('/fotos', express.static(path.join(__dirname, 'fotos')));
 
+
+// GET /api/animes?q=nome
+app.get('/api/animes', async (req, res) => {
+    const { q } = req.query;
+
+    if (!q) {
+        return res.status(400).json({ success: false, message: "Parâmetro 'q' é obrigatório" });
+    }
+
+    try {
+        const response = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(q)}&limit=5`);
+        res.json({
+            success: true,
+            data: response.data.data
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao consultar Jikan API" });
+    }
+});
+
 // ============================================
 // 📖 DADOS DOS LIVROS (API)
 // ============================================
-const books = [
-    {
-        id: 1,
-        title: "As Relíquias da Morte",
-        author: "J.K. Rowling",
-        price: 89.90,
-        image: "/fotos/33.jpg",
-        images: ["/fotos/33.jpg", "/fotos/33.jpg"],
-        description: "O sétimo e último livro da saga Harry Potter. A busca pelas Relíquias da Morte se torna crucial na luta final contra Voldemort.",
-        category: "livro",
-        authorBio: "J.K. Rowling é uma autora britânica mais conhecida por criar a série Harry Potter, que revolucionou a literatura infantil e se tornou um fenômeno cultural global."
-    },
-    {
-        id: 2,
-        title: "Os Dois Morrem no Final",
-        author: "Adam Silvera",
-        price: 54.90,
-        image: "/fotos/30.jpg",
-        images: ["/fotos/30.jpg", "/fotos/30.jpg"],
-        description: "Um romance emocionante sobre dois rapazes que recebem a notícia de que morrerão no mesmo dia.",
-        category: "livro",
-        authorBio: "Adam Silvera é um autor americano que escreve sobre temas importantes como morte, identidade e relacionamentos LGBTQ+. Seus livros tocam profundamente os leitores."
-    },
-    {
-        id: 3,
-        title: "A Menina do Outro Lado",
-        author: "Nagabe",
-        price: 45.00,
-        image: "/fotos/17.jpg",
-        images: ["/fotos/17.jpg", "/fotos/17.jpg"],
-        description: "Um mangá encantador sobre uma menina misteriosa e as histórias que a cercam.",
-        category: "manga",
-        authorBio: "Nagabe é um mangaká japonês conhecido por suas obras atmosféricas e misteriosas. Seu estilo único combina suspense com sentimentos delicados e profundos."
-    },
-    {
-        id: 4,
-        title: "A Canção de Aquiles",
-        author: "Madeline Miller",
-        price: 62.90,
-        image: "/fotos/13.jpg",
-        images: ["/fotos/13.jpg", "/fotos/13.jpg"],
-        description: "Uma reinterpretação poética da história de Aquiles e Pátroclo durante a Guerra de Troia.",
-        category: "livro",
-        authorBio: "Madeline Miller é uma autora americana que reimagina histórias mitológicas com sensibilidade e profundidade. Ela traz novas perspectivas aos clássicos antigos."
-    },
-    {
-        id: 5,
-        title: "Jujutsu Kaisen: Batalha de Feiticeiros",
-        author: "Gege Akutami",
-        price: 35.00,
-        image: "/fotos/27.jpg",
-        images: ["/fotos/27.jpg", "/fotos/27.jpg"],
-        description: "Um mangá de ação e fantasia sobre jovens feiticeiros que combatem espíritos amaldiçoados.",
-        category: "manga",
-        authorBio: "Gege Akutami é um mangaká japonês criador de Jujutsu Kaisen. Seu trabalho é reconhecido por combinar ação emocionante com personagens bem desenvolvidos e narrativas complexas."
-    },
-    {
-        id: 6,
-        title: "O Cara Que Estou a Fim não É um Cara?!",
-        author: "Sumiko Arai",
-        price: 38.90,
-        image: "/fotos/18.jpg",
-        images: ["/fotos/18.jpg", "/fotos/18.jpg"],
-        description: "Um mangá romântico e cômico que desafia as expectativas de identidade e amor.",
-        category: "manga",
-        authorBio: "Sumiko Arai é uma mangaká japonesa que explora temas de identidade, gênero e relacionamentos de forma leve e envolvente. Sua obra é conhecida pela representatividade."
-    },
-    {
-        id: 7,
-        title: "Dragon Ball Super Vol. 1",
-        author: "Akira Toriyama",
-        price: 49.90,
-        image: "/fotos/paginas/dbz1.jpg",
-        images: [
-            "/fotos/paginas/dbz1.jpg",
-            "/fotos/paginas/3 (1).jpg",
-        ],
-        description: "A continuação da famosa série Dragon Ball, onde Goku e seus amigos enfrentam novos desafios e inimigos poderosos.",
-        category: "manga",
-        authorBio: "Akira Toriyama é um renomado mangaká japonês, mundialmente conhecido por criar Dragon Ball e Dr. Slump, duas das obras mais influentes da história dos mangás. Seu estilo revolucionou a indústria.",
-        pages: [
-            "/fotos/paginas/3 (1).jpg",
-            "/fotos/paginas/3 (2).jpg",
-            "/fotos/paginas/3 (3).jpg",
-            "/fotos/paginas/3 (4).jpg",
-            "/fotos/paginas/3 (5).jpg",
-            "/fotos/paginas/3 (6).jpg",
-            "/fotos/paginas/3 (7).jpg"
-        ]
-    },
-    {
-        id: 8,
-        title: "O Príncipe Cruel",
-        author: "Katherine Arden",
-        price: 52.90,
-        image: "/fotos/21.jpg",
-        images: ["/fotos/21.jpg", "/fotos/21.jpg"],
-        description: "Um romance de fantasia sobre um príncipe cruel e uma jovem que se vê envolvida em sua história.",
-        category: "livro",
-        authorBio: "Katherine Arden é uma autora americana de fantasia e ficção histórica. Seus livros combinam romance, ação e elementos sobrenaturais de forma envolvente."
-    },
-    {
-        id: 9,
-        title: "Dragon Ball Super Vol. 3",
-        author: "Akira Toriyama",
-        price: 49.90,
-        image: "/fotos/paginas/dbz3.jpg",
-        images: [
-            "/fotos/paginas/dbz3.jpg",
-            "/fotos/paginas/3 (6).jpg",
-            "/fotos/paginas/3 (7).jpg",
-        ],
-        description: "Continuação da série com novos desafios intergalácticos e batalhas épicas.",
-        category: "manga",
-        authorBio: "Akira Toriyama continua revolucionando a indústria de mangá com suas criações ousadas e personagens memoráveis que conquistaram gerações de fãs ao redor do mundo."
-    },
-    {
-        id: 10,
-        title: "Câmara Secreta",
-        author: "J.K. Rowling",
-        price: 85.00,
-        image: "/fotos/37.jpg",
-        images: ["/fotos/32.jpg"],
-        description: "O segundo livro da saga Harry Potter. Mistérios e perigos rondam Hogwarts.",
-        category: "livro",
-        authorBio: "J.K. Rowling criou um universo mágico que capturou a imaginação de milhões. Sua capacidade de tecer histórias complexas e envolventes a torna uma das autoras mais lidas do mundo."
-    },
-    {
-        id: 11,
-        title: "O Hobbit",
-        author: "J.R.R. Tolkien",
-        price: 45.00,
-        image: "/fotos/38.jpg",
-        images: ["/fotos/38.jpg", "/fotos/38.jpg"],
-        description: "A jornada épica de Bilbo Bolseiro, um hobbit que se vê envolvido em uma aventura inesperada.",
-        category: "livro",
-        authorBio: "J.R.R. Tolkien é um autor britânico mais conhecido por criar o universo de Middle-earth, incluindo a saga do Hobbit e do Senhor dos Anéis."
+
+// Não armazenamos mais livros em memória – agora usamos Supabase para persistência.
+// (o array `books` só existia em versões anteriores como fallback local.)
+
+const apiRoutes = require('./api');
+app.use('/api', apiRoutes); // Isso fará com que as rotas de api.js funcionem sob /api/...
+
+// Rota para buscar Livros no Google Books
+app.get('/api/externo/livros', async (req, res) => {
+    const { q } = req.query;
+    try {
+        const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}`);
+        // Mapear para o formato que o seu frontend já entende
+        const livros = response.data.items.map(item => ({
+            id: item.id,
+            title: item.volumeInfo.title,
+            author: item.volumeInfo.authors ? item.volumeInfo.authors.join(', ') : 'Autor Desconhecido',
+            price: item.saleInfo?.listPrice?.amount || 39.90, // Google nem sempre retorna preço
+            image: item.volumeInfo.imageLinks?.thumbnail || '/fotos/default.jpg',
+            description: item.volumeInfo.description || 'Sem descrição disponível.'
+        }));
+        res.json({ success: true, data: livros });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao consultar Google Books" });
     }
-    
-];
+});
+
+// Rota para buscar Mangás no Jikan (MyAnimeList)
+app.get('/api/externo/mangas', async (req, res) => {
+    const { q } = req.query;
+    try {
+        const response = await axios.get(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=10`);
+        const mangas = response.data.data.map(manga => ({
+            id: manga.mal_id,
+            title: manga.title,
+            author: manga.authors.map(a => a.name).join(', '),
+            price: 45.00, // API Jikan não fornece preços de venda
+            image: manga.images.jpg.image_url,
+            description: manga.synopsis
+        }));
+        res.json({ success: true, data: mangas });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao consultar Jikan API" });
+    }
+});
 
 // ============================================
 // 🔧 ENDPOINTS DA API
 // ============================================
 
 // GET /api/livros - Retorna todos os livros
-app.get('/api/livros', (req, res) => {
-    res.json({
-        success: true,
-        data: books,
-        count: books.length
-    });
+app.get('/api/livros', async (req, res) => {
+  try {
+    const { data, error, count } = await supabase
+      .from('livros')
+      .select('*', { count: 'exact' });
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+    res.json({ success: true, data, count });
+  } catch (err) {
+    console.error('Erro ao listar livros:', err);
+    res.status(500).json({ success: false, message: 'Erro ao listar livros', error: err.message });
+  }
 });
 
-// GET /api/livros/:id - Retorna um livro específico
-app.get('/api/livros/:id', (req, res) => {
+// GET /api/livros/:id - Retorna um livro específico (Supabase)
+app.get('/api/livros/:id', async (req, res) => {
     const { id } = req.params;
-    const book = books.find(b => b.id === parseInt(id));
-
-    if (!book) {
-        return res.status(404).json({
-            success: false,
-            message: "Livro não encontrado"
-        });
+    try {
+        const { data: book, error } = await supabase
+            .from('livros')
+            .select('*')
+            .eq('id', id)
+            .single();
+        if (error) throw error;
+        if (!book) {
+            return res.status(404).json({ success: false, message: "Livro não encontrado" });
+        }
+        res.json({ success: true, data: book });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Erro ao buscar livro', error: err.message });
     }
-
-    res.json({
-        success: true,
-        data: book
-    });
 });
 
 // GET /api/livros/:id/pages - Retorna as páginas (imagens) de um livro
-app.get('/api/livros/:id/pages', (req, res) => {
+app.get('/api/livros/:id/pages', async (req, res) => {
     const { id } = req.params;
-    const book = books.find(b => b.id === parseInt(id));
+    try {
+        const { data: book, error } = await supabase
+            .from('livros')
+            .select('*')
+            .eq('id', id)
+            .single();
+        if (error) throw error;
+        if (!book) {
+            return res.status(404).json({ success: false, message: 'Livro não encontrado' });
+        }
 
-    if (!book) {
-        return res.status(404).json({ success: false, message: 'Livro não encontrado' });
-    }
+        // Se o livro contém um array `pages` (para leitura completa), usa esse
+        if (Array.isArray(book.pages) && book.pages.length) {
+            return res.json({ success: true, data: book.pages, bookId: book.id, bookTitle: book.title });
+        }
 
-    // Se o livro contém um array `pages` (para leitura completa), usa esse
-    if (Array.isArray(book.pages) && book.pages.length) {
-        return res.json({ success: true, data: book.pages, bookId: book.id, bookTitle: book.title });
-    }
+        // Se o livro já contém um array `images` (preview), retorna diretamente
+        if (Array.isArray(book.images) && book.images.length) {
+            return res.json({ success: true, data: book.images });
+        }
 
-    // Se o livro já contém um array `images` (preview), retorna diretamente
-    if (Array.isArray(book.images) && book.images.length) {
-        return res.json({ success: true, data: book.images });
-    }
+        // Caso contrário, tenta ler um índice em /fotos/paginas/book-<id>/index.json
+        const fs = require('fs');
+        const pagesDir = path.join(__dirname, 'fotos', 'paginas', `book-${id}`);
+        const indexFile = path.join(pagesDir, 'index.json');
 
-    // Caso contrário, tenta ler um índice em /fotos/paginas/book-<id>/index.json
-    const fs = require('fs');
-    const pagesDir = path.join(__dirname, 'fotos', 'paginas', `book-${id}`);
-    const indexFile = path.join(pagesDir, 'index.json');
+        // se existir index.json, usa-o (permite apontar para imagens existentes sem copiar)
+        if (fs.existsSync(indexFile)) {
+            try {
+                const content = fs.readFileSync(indexFile, 'utf8');
+                const images = JSON.parse(content);
+                return res.json({ success: true, data: images });
+            } catch (err) {
+                console.warn('Erro lendo index.json para', book.id, err);
+                const fallback = [];
+                if (book.image) fallback.push(book.image);
+                return res.json({ success: true, data: fallback });
+            }
+        }
 
-    // se existir index.json, usa-o (permite apontar para imagens existentes sem copiar)
-    if (fs.existsSync(indexFile)) {
-        try {
-            const content = fs.readFileSync(indexFile, 'utf8');
-            const images = JSON.parse(content);
+        // se não houver index.json, tenta listar arquivos na pasta book-<id>
+        fs.readdir(pagesDir, (err, files) => {
+            if (err) {
+                // pasta não existe ou erro de leitura: usar imagem de capa (se existir)
+                const fallback = [];
+                if (book.image) fallback.push(book.image);
+                return res.json({ success: true, data: fallback });
+            }
+
+            const images = files
+                .filter(f => /\.(jpe?g|png|webp|gif)$/i.test(f))
+                .sort()
+                .map(f => path.posix.join('/fotos/paginas', `book-${id}`, f));
+
             return res.json({ success: true, data: images });
-        } catch (err) {
-            console.warn('Erro lendo index.json para', book.id, err);
-            const fallback = [];
-            if (book.image) fallback.push(book.image);
-            return res.json({ success: true, data: fallback });
-        }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Erro ao buscar livro para páginas', error: err.message });
     }
-
-    // se não houver index.json, tenta listar arquivos na pasta book-<id>
-    fs.readdir(pagesDir, (err, files) => {
-        if (err) {
-            // pasta não existe ou erro de leitura: usar imagem de capa (se existir)
-            const fallback = [];
-            if (book.image) fallback.push(book.image);
-            return res.json({ success: true, data: fallback });
-        }
-
-        const images = files
-            .filter(f => /\.(jpe?g|png|webp|gif)$/i.test(f))
-            .sort()
-            .map(f => path.posix.join('/fotos/paginas', `book-${id}`, f));
-
-        return res.json({ success: true, data: images });
-    });
 });
 
-// GET /api/livros/autor/:author - Retorna livros por autor
-app.get('/api/livros/autor/:author', (req, res) => {
+// GET /api/livros/autor/:author - Retorna livros por autor (Supabase)
+app.get('/api/livros/autor/:author', async (req, res) => {
     const { author } = req.params;
-    const filtered = books.filter(b => b.author.toLowerCase() === author.toLowerCase());
-
-    res.json({
-        success: true,
-        data: filtered,
-        count: filtered.length
-    });
+    try {
+        const { data, error } = await supabase
+            .from('livros')
+            .select('*')
+            .ilike('autor', author);
+        if (error) throw error;
+        res.json({ success: true, data, count: data.length });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Erro ao buscar por autor', error: err.message });
+    }
 });
 
-// GET /api/mangas - Retorna todos os mangás
-app.get('/api/mangas', (req, res) => {
-    const mangas = books.filter(b => b.category === 'manga');
-    res.json({
-        success: true,
-        data: mangas,
-        count: mangas.length
-    });
+// GET /api/mangas - Retorna todos os mangás (Supabase)
+app.get('/api/mangas', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('livros')
+            .select('*')
+            .eq('categoria', 'manga');
+        if (error) throw error;
+        res.json({ success: true, data, count: data.length });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Erro ao buscar mangás', error: err.message });
+    }
 });
 
-// GET /api/categorias/:category - Retorna livros por categoria
-app.get('/api/categorias/:category', (req, res) => {
+// GET /api/categorias/:category - Retorna livros por categoria (Supabase)
+app.get('/api/categorias/:category', async (req, res) => {
     const { category } = req.params;
-    const filtered = books.filter(b => b.category === category.toLowerCase());
-
-    res.json({
-        success: true,
-        data: filtered,
-        count: filtered.length
-    });
+    try {
+        const { data, error } = await supabase
+            .from('livros')
+            .select('*')
+            .eq('categoria', category.toLowerCase());
+        if (error) throw error;
+        res.json({ success: true, data, count: data.length });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Erro ao buscar por categoria', error: err.message });
+    }
 });
 
-// GET /api/buscar - Busca por título ou autor
-app.get('/api/buscar', (req, res) => {
+// GET /api/buscar - Busca por título ou autor (Supabase)
+app.get('/api/buscar', async (req, res) => {
     const { q } = req.query;
 
     if (!q) {
-        return res.status(400).json({
-            success: false,
-            message: "Parâmetro 'q' é obrigatório"
-        });
+        return res.status(400).json({ success: false, message: "Parâmetro 'q' é obrigatório" });
     }
 
     const searchTerm = q.toLowerCase();
-    const results = books.filter(b =>
-        b.title.toLowerCase().includes(searchTerm) ||
-        b.author.toLowerCase().includes(searchTerm)
-    );
-
-    res.json({
-        success: true,
-        data: results,
-        count: results.length,
-        query: q
-    });
+    try {
+        const { data, error } = await supabase
+            .from('livros')
+            .select('*')
+            .or(`titulo.ilike.%${searchTerm}%,autor.ilike.%${searchTerm}%`);
+        if (error) throw error;
+        res.json({ success: true, data, count: data.length, query: q });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Erro na busca', error: err.message });
+    }
 });
 
 // GET /api/status - Health check
@@ -320,96 +285,65 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// EXEMPLO: consulta simples ao Supabase (ajuste conforme seu esquema)
+app.get('/api/supabase-test', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('livros').select('*').limit(5);
+        if (error) throw error;
+        res.json({ success: true, data });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Erro Supabase', error: err.message });
+    }
+});
+
 // ============================================
 // 📝 ENDPOINTS CRUD (POST, PUT, DELETE)
 // ============================================
 
 // POST /api/livros - Criar novo livro
-app.post('/api/livros', (req, res) => {
-    const { title, author, price, image, category, description, pages } = req.body;
-
-    // Validação
-    if (!title || !author || !price || !image || !category) {
-        return res.status(400).json({
-            success: false,
-            message: "Campos obrigatórios: title, author, price, image, category"
-        });
-    }
-
-    // Gerar novo ID
-    const newId = Math.max(...books.map(b => b.id), 0) + 1;
-
-    const newBook = {
-        id: newId,
-        title: title.trim(),
-        author: author.trim(),
-        price: parseFloat(price),
-        image: image.trim(),
-        images: [image.trim()],
-        category: category.toLowerCase(),
-        description: description || "",
-        pages: Array.isArray(pages) ? pages : (pages ? pages.split(',').map(p => p.trim()).filter(p => p) : [])
-    };
-
-    books.push(newBook);
-
-    res.status(201).json({
-        success: true,
-        message: "Livro criado com sucesso",
-        data: newBook
-    });
+app.post('/api/livros', async (req, res) => {
+  // Extrai campos do corpo ou você pode enviar todo objeto via spread
+  const payload = { ...req.body };
+  try {
+    const { data, error } = await supabase.from('livros').insert(payload).single();
+    if (error) throw error;
+    res.status(201).json({ success:true, data });
+  } catch (err) {
+    res.status(400).json({ success:false, message: err.message });
+  }
 });
 
-// PUT /api/livros/:id - Atualizar livro
-app.put('/api/livros/:id', (req, res) => {
-    const bookId = parseInt(req.params.id);
-    const { title, author, price, image, category, description, pages } = req.body;
-
-    const book = books.find(b => b.id === bookId);
-    if (!book) {
-        return res.status(404).json({
-            success: false,
-            message: "Livro não encontrado"
-        });
+// PUT /api/livros/:id - Atualizar livro (Supabase)
+app.put('/api/livros/:id', async (req, res) => {
+    const bookId = req.params.id;
+    const payload = { ...req.body };
+    try {
+        const { data, error } = await supabase
+            .from('livros')
+            .update(payload)
+            .eq('id', bookId)
+            .single();
+        if (error) throw error;
+        res.json({ success: true, message: 'Livro atualizado com sucesso', data });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
     }
-
-    // Atualizar campos
-    if (title) book.title = title.trim();
-    if (author) book.author = author.trim();
-    if (price) book.price = parseFloat(price);
-    if (image) book.image = image.trim();
-    if (category) book.category = category.toLowerCase();
-    if (description !== undefined) book.description = description;
-    if (pages) {
-        book.pages = Array.isArray(pages) ? pages : pages.split(',').map(p => p.trim()).filter(p => p);
-    }
-
-    res.json({
-        success: true,
-        message: "Livro atualizado com sucesso",
-        data: book
-    });
 });
 
-// DELETE /api/livros/:id - Deletar livro
-app.delete('/api/livros/:id', (req, res) => {
-    const bookId = parseInt(req.params.id);
-    const index = books.findIndex(b => b.id === bookId);
-
-    if (index === -1) {
-        return res.status(404).json({
-            success: false,
-            message: "Livro não encontrado"
-        });
+// DELETE /api/livros/:id - Deletar livro (Supabase)
+app.delete('/api/livros/:id', async (req, res) => {
+    const bookId = req.params.id;
+    try {
+        const { data, error } = await supabase
+            .from('livros')
+            .delete()
+            .eq('id', bookId)
+            .single();
+        if (error) throw error;
+        res.json({ success: true, message: 'Livro deletado com sucesso', data });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
     }
-
-    const deletedBook = books.splice(index, 1);
-
-    res.json({
-        success: true,
-        message: "Livro deletado com sucesso",
-        data: deletedBook[0]
-    });
 });
 
 // ============================================
@@ -445,6 +379,7 @@ app.get('/admin-login', (req, res) => {
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
 });
+
 
 // Iniciar servidor
 app.listen(PORT, () => {

@@ -1,10 +1,11 @@
 // ============================================
-// 📚 DADOS DOS LIVROS (Carregados via API)
+// 📚 DADOS DOS LIVROS E MANGÁS (Carregados via APIs Externas)
 // ============================================
-// Array que será preenchido pela API
-// URL da API: http://localhost:3000
+// Arrays que serão preenchidos pelas APIs do Google Books e Jikan
+// URLs das APIs externas: Google Books e Jikan
 const API_URL = "/api";
 let books = [];
+let allBooks = []; // Para armazenar livros + mangás combinados
 
 // ============================================
 // 🛒 GERENCIADOR DE CARRINHO (Classe)
@@ -98,63 +99,123 @@ function irParaDadosLivro() {
 }
 
 // ============================================
-// 🔄 CARREGAR DADOS DA API
+// 🔄 CARREGAR DADOS DAS APIs EXTERNAS
+// ============================================
+
+// Função para buscar livros do Google Books
+async function loadBooksFromGoogle(searchTerm = 'bestsellers') {
+    try {
+        const response = await fetch(`${API_URL}/livros-externos?q=${encodeURIComponent(searchTerm)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            return result.data;
+        }
+        return [];
+    } catch (error) {
+        console.error("Erro ao buscar livros do Google Books:", error);
+        return [];
+    }
+}
+
+// Função para buscar mangás da Jikan API
+async function loadMangasFromJikan(searchTerm = 'bestsellers') {
+    try {
+        const response = await fetch(`${API_URL}/mangas-externos?q=${encodeURIComponent(searchTerm)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            return result.data;
+        }
+        return [];
+    } catch (error) {
+        console.error("Erro ao buscar mangás da Jikan:", error);
+        return [];
+    }
+}
+
+// Função para busca combinada (livros e mangás)
+async function searchCombined(searchTerm) {
+    try {
+        const response = await fetch(`${API_URL}/buscar-tudo?q=${encodeURIComponent(searchTerm)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            return result.data;
+        }
+        return [];
+    } catch (error) {
+        console.error("Erro na busca combinada:", error);
+        return [];
+    }
+}
+
+// ============================================
+// 🔄 CARREGAR DADOS DA API (Mantido para compatibilidade)
 // ============================================
 // Função assíncrona que faz requisição GET para a API
 // e popula o array 'books' com os dados retornados
-async function loadBooksFromAPI() {
+// Altere para apontar para a nova rota externa no seu servidor
+async function searchExternal(tipo) {
+    const term = searchInput.value || "adventure"; // termo padrão
+    let resultados = [];
+
     try {
-        const response = await fetch(`${API_URL}/livros`);
-        
-        if (!response.ok) {
-            throw new Error(`Erro na API: ${response.status}`);
+        if (tipo === 'livro') {
+            resultados = await loadBooksFromGoogle(term);
+        } else if (tipo === 'manga') {
+            resultados = await loadMangasFromJikan(term);
+        } else {
+            resultados = await searchCombined(term);
         }
 
-        const result = await response.json();
-        
-        if (result.success && result.data) {
-            books = result.data;
+        if (resultados.length > 0) {
+            books = resultados;
             filteredBooks = [...books];
-            renderBooks();
-            updateCartUI();
-            showNotification(`${result.count} livros carregados com sucesso!`);
+            renderBooks(books);
+            showNotification(`Encontrados ${resultados.length} resultados!`);
+        } else {
+            showNotification("Nenhum resultado encontrado", "warning");
         }
     } catch (error) {
-        console.error("Erro ao carregar livros da API:", error);
-        showNotification(`Erro ao carregar dados: ${error.message}`, "error");
-        // Carrega dados vazios se API não estiver disponível
-        renderBooks();
+        showNotification("Erro ao buscar dados externos", "error");
+        console.error(error);
     }
 }
 
 // Função para buscar na API
 async function searchBooksFromAPI(searchTerm) {
     try {
-        const response = await fetch(`${API_URL}/buscar?q=${encodeURIComponent(searchTerm)}`);
-        const result = await response.json();
+        allBooks = await searchCombined(searchTerm);
 
-        if (result.success) {
-            filteredBooks = result.data;
+        if (allBooks.length > 0) {
+            filteredBooks = allBooks;
             renderBooks(filteredBooks);
+        } else {
+            showNotification("Nenhum resultado encontrado", "warning");
         }
     } catch (error) {
         console.error("Erro na busca:", error);
-        filterBooks(); // Fallback para filtro local
+        showNotification("Erro ao buscar", "error");
     }
 }
 
 // Função para filtrar por categoria (livros ou mangás)
 async function filterByCategory(category) {
     try {
-        const response = await fetch(`${API_URL}/categorias/${category}`);
-        const result = await response.json();
-
-        if (result.success) {
-            filteredBooks = result.data;
-            renderBooks(filteredBooks);
+        if (category === 'livro') {
+            books = await loadBooksFromGoogle('fiction');
+        } else if (category === 'manga') {
+            books = await loadMangasFromJikan('action');
+        } else {
+            books = await searchCombined('bestsellers');
         }
+
+        filteredBooks = [...books];
+        renderBooks(filteredBooks);
     } catch (error) {
         console.error("Erro ao filtrar por categoria:", error);
+        showNotification("Erro ao filtrar", "error");
     }
 }
 
@@ -173,9 +234,9 @@ function renderBooks(booksToRender = books) {
                 <p class="book-author">por ${book.author}</p>
                 <div class="book-price">R$ ${book.price.toFixed(2)}</div>
                 <div class="book-actions">
-                        <button class="view-btn" onclick="showDetail(${book.id})">Detalhes</button>
+                        <button class="view-btn" onclick="showDetail('${book.id}')">Detalhes</button>
 
-                    <button class="add-btn" onclick="addToCart(${book.id})">Comprar</button>
+                    <button class="add-btn" onclick="addToCart('${book.id}')">Comprar</button>
                 </div>
             </div>
         </div>
@@ -248,7 +309,7 @@ function updateCartUI() {
                     <p>${item.author} - Qtd: ${item.quantity}</p>
                 </div>
                 <div class="cart-item-price">R$ ${(item.price * item.quantity).toFixed(2)}</div>
-                <button class="cart-remove-btn" onclick="removeFromCart(${item.id})">Remover</button>
+                <button class="cart-remove-btn" onclick="removeFromCart('${item.id}')">Remover</button>
             </div>
         `).join('');
     }
@@ -301,7 +362,7 @@ function renderMoreByAuthor(author, currentId) {
     }
 
     container.innerHTML = others.map(b => `
-        <div class="more-card" onclick="showDetail(${b.id})" role="button" tabindex="0">
+        <div class="more-card" onclick="showDetail('${b.id}')" role="button" tabindex="0">
             <img src="${b.image}" alt="${b.title}" class="more-thumb">
             <div class="more-title">${b.title}</div>
         </div>
@@ -438,7 +499,7 @@ detailModal.addEventListener("click", (e) => {
 // 🚀 INICIALIZAR (DOMContentLoaded)
 // ============================================
 // Executado quando o HTML termina de carregar.
-// Carrega os livros da API, atualiza o UI do carrinho e injeta animações CSS.
+// Carrega os livros e mangás das APIs, atualiza o UI do carrinho e injeta animações CSS.
 document.addEventListener("DOMContentLoaded", async () => {
     // Injetar animações CSS
     const style = document.createElement("style");
@@ -451,9 +512,37 @@ document.addEventListener("DOMContentLoaded", async () => {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(100%); opacity: 0; }
         }
+        .loading { opacity: 0.6; pointer-events: none; }
     `;
     document.head.appendChild(style);
 
-    // Carregar livros da API
-    await loadBooksFromAPI();
+    // Carregamento inicial de livros e mangás populares
+    async function loadInitialData() {
+        try {
+            // Carrega livros e mangás populares
+            const livros = await loadBooksFromGoogle('bestsellers');
+            const mangas = await loadMangasFromJikan('bestsellers');
+            
+            // combinar ambos e embaralhar para variedade
+            let combinados = [...livros, ...mangas];
+            if (combinados.length === 0) {
+                showNotification("Não foi possível carregar os itens iniciais", "warning");
+                return;
+            }
+
+            // embaralhar para evitar repetições seguidas
+            combinados = combinados.sort(() => Math.random() - 0.5);
+
+            books = combinados;
+            filteredBooks = [...books];
+            renderBooks(books);
+            updateCartUI();
+        } catch (error) {
+            console.error("Erro ao carregar dados iniciais:", error);
+            showNotification("Erro ao carregar catálogo", "error");
+        }
+    }
+
+    // Carrega os dados iniciais
+    await loadInitialData();
 });

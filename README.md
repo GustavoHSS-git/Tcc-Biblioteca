@@ -27,8 +27,9 @@ A proposta tem como objetivo facilitar o acesso das pessoas ao consumo de livros
 ## 🚀 Como Começar
 
 1. Clone ou baixe este repositório
-2. Abra `inicial/i.html` no navegador para acessar a página inicial
-3. Navegue pelas diferentes seções da plataforma
+3. Crie um arquivo `.env` na raiz com as variáveis necessárias (SUPABASE_URL, SUPABASE_KEY)
+4. Abra `inicial/i.html` no navegador para acessar a página inicial
+5. Navegue pelas diferentes seções da plataforma
 
 ##  Funcionalidades Principais
 
@@ -44,7 +45,7 @@ A proposta tem como objetivo facilitar o acesso das pessoas ao consumo de livros
 
 - **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
 - **Backend:** Node.js e Express.js
-- **Banco de Dados:** Integração com APIs
+- **Banco de Dados:** Supabase (via `.env`)
 - **Design:** UX/UI focado em minimalismo e acessibilidade
 
 ##  Conclusão

@@ -1,38 +1,7 @@
 // ============================================
-// 📚 DADOS DOS LIVROS - Centralizados
+// 📚 DADOS DOS LIVROS - Carregados das APIs
 // ============================================
-const books = [
-	{ 
-		title: "As Relíquias da Morte", 
-		author: "J.K. Rowling",
-		image: "/fotos/33.jpg"
-	},
-	{ 
-		title: "Os Dois Morrem no Final", 
-		author: "Adam Silvera",
-		image: "/fotos/30.jpg"
-	},
-	{ 
-		title: "A Menina do Outro Lado", 
-		author: "Nagabe",
-		image: "/fotos/17.jpg"
-	},
-	{ 
-		title: "A Canção de Aquiles", 
-		author: "Madeline Miller",
-		image: "/fotos/13.jpg"
-	},
-	{ 
-		title: "Jujutsu Kaisen: Batalha de Feiticeiros", 
-		author: "Gege Akutami",
-		image: "/fotos/27.jpg"
-	},
-	{ 
-		title: "O Cara Que Estou a Fim não É um Cara?!", 
-		author: "Sumiko Arai",
-		image: "/fotos/18.jpg"
-	}
-];
+let books = [];
 
 // ============================================
 // 🎨 ELEMENTOS DO DOM
@@ -46,6 +15,34 @@ const rightArrow = document.querySelector(".nav-arrow.right");
 
 let currentIndex = 0;
 let isAnimating = false;
+
+// ============================================
+// 📡 FUNÇÕES DE CARREGAMENTO DE DADOS
+// ============================================
+
+// Função para buscar livros do Google Books
+async function loadBooksFromGoogle() {
+	try {
+		const response = await fetch('/api/livros-populares');
+		const result = await response.json();
+		return result.success ? result.data : [];
+	} catch (error) {
+		console.error('Erro ao buscar livros:', error);
+		// Fallback: retorna dados estáticos se a API falhar
+		return [
+			{ 
+				title: "As Relíquias da Morte", 
+				author: "J.K. Rowling",
+				image: "https://covers.openlibrary.org/b/id/7918657-M.jpg"
+			},
+			{ 
+				title: "1984", 
+				author: "George Orwell",
+				image: "https://covers.openlibrary.org/b/id/7921457-M.jpg"
+			}
+		];
+	}
+}
 
 // ============================================
 // 🏗️ CRIAR CARDS DINAMICAMENTE
@@ -175,11 +172,23 @@ function attachEventListeners() {
 // ============================================
 // 🚀 INICIALIZAR
 // ============================================
-function init() {
-	createCards();
-	createDots();
-	attachEventListeners();
-	updateCarousel(0);
+async function init() {
+	try {
+		// Carrega os livros das APIs
+		books = await loadBooksFromGoogle();
+		
+		if (books.length === 0) {
+			console.warn('Nenhum livro foi carregado');
+			return;
+		}
+
+		createCards();
+		createDots();
+		attachEventListeners();
+		updateCarousel(0);
+	} catch (error) {
+		console.error('Erro ao inicializar:', error);
+	}
 }
 
 // Iniciar quando o DOM estiver pronto
