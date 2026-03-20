@@ -3,6 +3,7 @@ const router = express.Router();
 // Importar os serviços das APIs externas
 const { buscarLivros } = require('./loja/services/googleBooks.js'); 
 const { buscarMangas } = require('./loja/services/jikan.js');
+const supabase = require('./supabase');
 
 // ============================================
 // 📚 ENDPOINTS DE BUSCA (Google Books e Jikan)
@@ -102,6 +103,131 @@ router.get('/buscar-tudo', async (req, res) => {
         res.json({ success: true, data: combinado, count: combinado.length });
     } catch (error) {
         res.status(500).json({ success: false, message: "Erro na busca" });
+    }
+});
+
+// ============================================
+// 📚 CRUD PARA LIVROS (Supabase)
+// ============================================
+
+// GET /api/livros - Listar todos os livros
+router.get('/livros', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('livros').select('*');
+        if (error) throw error;
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao buscar livros" });
+    }
+});
+
+// POST /api/livros - Criar um novo livro
+router.post('/livros', async (req, res) => {
+    const { title, author, price, image, description } = req.body;
+    try {
+        const { data, error } = await supabase.from('livros').insert([{ title, author, price, image, description }]).select();
+        if (error) throw error;
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao criar livro" });
+    }
+});
+
+// PUT /api/livros/:id - Atualizar um livro
+router.put('/livros/:id', async (req, res) => {
+    const { id } = req.params;
+    const { title, author, price, image, description } = req.body;
+    try {
+        const { data, error } = await supabase.from('livros').update({ title, author, price, image, description }).eq('id', id).select();
+        if (error) throw error;
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao atualizar livro" });
+    }
+});
+
+// DELETE /api/livros/:id - Deletar um livro
+router.delete('/livros/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { error } = await supabase.from('livros').delete().eq('id', id);
+        if (error) throw error;
+        res.json({ success: true, message: "Livro deletado" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao deletar livro" });
+    }
+});
+
+// ============================================
+// 🎉 CRUD PARA PROMOÇÕES (Supabase)
+// ============================================
+
+// GET /api/promocoes - Listar todas as promoções
+router.get('/promocoes', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('promocoes').select('*');
+        if (error) throw error;
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao buscar promoções" });
+    }
+});
+
+// POST /api/promocoes - Criar uma nova promoção
+router.post('/promocoes', async (req, res) => {
+    const { bookId, book_id, discount_type, discountType, discount_value, discountValue, start_date, end_date } = req.body;
+    const bookIdFinal = bookId || book_id;
+    const discountTypeFinal = discount_type || discountType;
+    const discountValueFinal = discount_value || discountValue;
+    
+    try {
+        const { data, error } = await supabase.from('promocoes').insert([{
+            book_id: bookIdFinal,
+            discount_type: discountTypeFinal,
+            discount_value: discountValueFinal,
+            start_date,
+            end_date
+        }]).select();
+        if (error) throw error;
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao criar promoção" });
+    }
+});
+
+// PUT /api/promocoes/:id - Atualizar uma promoção
+router.put('/promocoes/:id', async (req, res) => {
+    const { id } = req.params;
+    const { bookId, book_id, discount_type, discountType, discount_value, discountValue, start_date, end_date, category } = req.body;
+    const bookIdFinal = bookId || book_id;
+    const discountTypeFinal = discount_type || discountType;
+    const discountValueFinal = discount_value || discountValue;
+    
+    try {
+        const { data, error } = await supabase.from('promocoes').update({
+            book_id: bookIdFinal,
+            discount_type: discountTypeFinal,
+            discount_value: discountValueFinal,
+            start_date,
+            end_date,
+            category
+        }).eq('id', id).select();
+        if (error) throw error;
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao atualizar promoção" });
+    }
+});
+
+// DELETE /api/promocoes/:id - Deletar uma promoção
+router.delete('/promocoes/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { error } = await supabase.from('promocoes').delete().eq('id', id);
+        if (error) throw error;
+        res.json({ success: true, message: "Promoção deletada" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao deletar promoção" });
     }
 });
 

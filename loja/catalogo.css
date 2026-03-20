@@ -299,6 +299,18 @@ body {
     margin: 12px 0;
 }
 
+.original-price {
+    text-decoration: line-through;
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-right: 8px;
+}
+
+.discounted-price {
+    color: var(--accent-color);
+    font-weight: 700;
+}
+
 .book-actions {
     display: flex;
     gap: 8px;

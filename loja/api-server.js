@@ -9,6 +9,11 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+
+// Importar serviços de APIs externas
+const { buscarLivros } = require('./services/googleBooks');
+const { buscarMangas } = require('./services/jikan');
 
 const app = express();
 const PORT = 3000;
@@ -17,8 +22,15 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Carregar catálogo de livros
+const catalogPath = path.join(__dirname, 'catalog.json');
+let books = fs.existsSync(catalogPath) ? JSON.parse(fs.readFileSync(catalogPath, 'utf8')) : [];
+
 // Servir arquivos estáticos da pasta `loja` (útil se quiser abrir a UI pelo navegador)
 app.use(express.static(path.join(__dirname)));
+
+// Servir arquivos estáticos da pasta `fotos` na raiz
+app.use('/fotos', express.static(path.join(__dirname, '..', 'fotos')));
 
 // ============================================
 // 📖 DADOS DOS LIVROS
@@ -139,6 +151,94 @@ app.get('/api/buscar', (req, res) => {
     });
 });
 
+// ============================================
+// 🌐 ENDPOINTS DE APIs EXTERNAS (Google Books e Jikan)
+// ============================================
+
+// GET /api/livros-externos - Busca livros no Google Books API
+app.get('/api/livros-externos', async (req, res) => {
+    try {
+        const { q = 'bestsellers' } = req.query;
+        console.log('[API] Buscando livros externos:', q);
+        
+        const livros = await buscarLivros(q);
+        
+        res.json({
+            success: true,
+            data: livros,
+            count: livros.length,
+            source: 'Google Books',
+            query: q
+        });
+    } catch (error) {
+        console.error('[API] Erro ao buscar livros externos:', error.message);
+        res.status(500).json({
+            success: false,
+            message: "Erro ao buscar livros da API externa",
+            error: error.message
+        });
+    }
+});
+
+// GET /api/mangas-externos - Busca mangás na Jikan API
+app.get('/api/mangas-externos', async (req, res) => {
+    try {
+        const { q = 'action' } = req.query;
+        console.log('[API] Buscando mangás externos:', q);
+        
+        const mangas = await buscarMangas(q);
+        
+        res.json({
+            success: true,
+            data: mangas,
+            count: mangas.length,
+            source: 'Jikan API',
+            query: q
+        });
+    } catch (error) {
+        console.error('[API] Erro ao buscar mangás externos:', error.message);
+        res.status(500).json({
+            success: false,
+            message: "Erro ao buscar mangás da API externa",
+            error: error.message
+        });
+    }
+});
+
+// GET /api/buscar-tudo - Busca combinada (livros + mangás)
+app.get('/api/buscar-tudo', async (req, res) => {
+    try {
+        const { q = 'bestsellers' } = req.query;
+        console.log('[API] Busca combinada:', q);
+        
+        // Buscar livros e mangás em paralelo
+        const [livros, mangas] = await Promise.all([
+            buscarLivros(q),
+            buscarMangas(q)
+        ]);
+        
+        // Combinar resultados
+        const combinados = [...livros, ...mangas];
+        
+        res.json({
+            success: true,
+            data: combinados,
+            count: combinados.length,
+            sources: ['Google Books', 'Jikan API'],
+            livrosCount: livros.length,
+            mangasCount: mangas.length,
+            query: q
+        });
+    } catch (error) {
+        console.error('[API] Erro na busca combinada:', error.message);
+        res.status(500).json({
+            success: false,
+            message: "Erro ao realizar busca combinada",
+            error: error.message
+        });
+    }
+});
+
 // GET /api/status - Health check
 app.get('/api/status', (req, res) => {
     res.json({
@@ -146,6 +246,31 @@ app.get('/api/status', (req, res) => {
         message: "API está funcionando!",
         timestamp: new Date().toISOString()
     });
+});
+
+// POST /api/reload - Recarrega o catálogo de livros
+app.post('/api/reload', async (req, res) => {
+    try {
+        const BookAutoloader = require('./services/bookAutoloader.js');
+        const loader = new BookAutoloader();
+        const { query = 'bestsellers' } = req.body;
+        await loader.fetchAndPopulateCatalog(query);
+        
+        // Recarregar books da memória
+        books = fs.existsSync(catalogPath) ? JSON.parse(fs.readFileSync(catalogPath, 'utf8')) : [];
+        
+        res.json({
+            success: true,
+            message: "Catálogo recarregado com sucesso",
+            count: books.length
+        });
+    } catch (error) {
+        console.error('Erro ao recarregar catálogo:', error);
+        res.status(500).json({
+            success: false,
+            message: "Erro ao recarregar catálogo"
+        });
+    }
 });
 
 // ============================================
@@ -166,62 +291,4 @@ app.listen(PORT, () => {
     ║  - GET  /api/status                   ║
     ╚════════════════════════════════════════╝
     `);
-});
-
-const express = require('express');
-const router = express.Router();
-const { buscarLivros } = require('./services/googleBooks.js');
-const { buscarMangas } = require('./services/jikan.js');
-
-router.get('/catalogo', async (req, res) => {
-    
-    const { q, tipo } = req.query;
-
-    if (!q) {
-        return res.status(400).json({ success: false, message: "Digite algo para buscar." });
-    }
-
-    try {
-        let resultados;
-
-        if (tipo === 'manga') {
-            
-            resultados = await buscarMangas(q);
-        } else {
-           
-            resultados = await buscarLivros(q);
-        }
-
-        res.json({
-            success: true,
-            data: resultados
-        });
-
-    } catch (error) {
-        console.error("Erro na rota de catálogo:", error);
-        res.status(500).json({ success: false, message: "Erro ao buscar dados externos." });
-    }
-});
-
-module.exports = router;
-
-console.error("Erro ao consultar API externa:", error.message);
-
-const express = require('express');
-const cors = require('cors');
-const apiRoutes = require('./api');
-const apiRouter = require('./api.js')
-
-const app = express();
-const PORT = process.env.PORT || 4000;
-
-app.use(cors());
-app.use(express.json());
-app.use('/api/v2', apiRouter);
-
-// Usar rotas da API
-app.use('/api', apiRoutes);
-
-app.listen(PORT, () => {
-    console.log(`🛒 Loja rodando em http://localhost:${PORT}`);
 });

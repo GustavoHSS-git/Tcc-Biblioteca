@@ -21,6 +21,7 @@
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^4.22.1",
+    "install": "^0.13.0",
     "node.js": "^0.0.1-security"
   },
   "devDependencies": {

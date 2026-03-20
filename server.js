@@ -66,6 +66,7 @@ app.get('/api/animes', async (req, res) => {
 // (o array `books` só existia em versões anteriores como fallback local.)
 
 const apiRoutes = require('./api');
+const { syncBuiltinESMExports } = require('module');
 app.use('/api', apiRoutes); // Isso fará com que as rotas de api.js funcionem sob /api/...
 
 // Rota para buscar Livros no Google Books
@@ -313,6 +314,8 @@ app.post('/api/livros', async (req, res) => {
   }
 });
 
+
+
 // PUT /api/livros/:id - Atualizar livro (Supabase)
 app.put('/api/livros/:id', async (req, res) => {
     const bookId = req.params.id;
@@ -330,6 +333,8 @@ app.put('/api/livros/:id', async (req, res) => {
     }
 });
 
+
+
 // DELETE /api/livros/:id - Deletar livro (Supabase)
 app.delete('/api/livros/:id', async (req, res) => {
     const bookId = req.params.id;
@@ -345,6 +350,67 @@ app.delete('/api/livros/:id', async (req, res) => {
         res.status(400).json({ success: false, message: err.message });
     }
 });
+
+// ============================================
+// 🤖 ENDPOINTS DE SINCRONIZAÇÃO AUTOMÁTICA
+// ============================================
+
+// POST /api/sync - Sincroniza livros e mangás das APIs externas
+app.post('/api/sync', async (req, res) => {
+  try {
+    const BookAutoloader = require('./services/bookAutoloader');
+    const autoloader = new BookAutoloader();
+    const result = await autoloader.syncAll();
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// GET /api/sync/status - Retorna status da última sincronização
+app.get('/api/sync/status', async (req, res) => {
+  try {
+    const { data: books } = await supabase
+      .from('livros')
+      .select('id')
+      .eq('categoria', 'livro');
+
+    const { data: mangas } = await supabase
+      .from('livros')
+      .select('id')
+      .eq('categoria', 'manga');
+
+    res.json({
+      success: true,
+      stats: {
+        totalLivros: books?.length || 0,
+        totalMangas: mangas?.length || 0,
+        totalItens: (books?.length || 0) + (mangas?.length || 0)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// ⏰ SINCRONIZAÇÃO AUTOMÁTICA (A CADA 24H)
+// ============================================
+
+// Sincroniza automaticamente a cada 24 horas
+setInterval(async () => {
+  console.log('[AUTO-SYNC] Iniciando sincronização programada...');
+  const BookAutoloader = require('./services/bookAutoloader');
+  const autoloader = new BookAutoloader();
+  await autoloader.syncAll();
+}, 24 * 60 * 60 * 1000); // 24 horas
 
 // ============================================
 // 🌐 ROTAS DO SITE

@@ -1,61 +1,127 @@
 const axios = require('axios');
+const { resolveImageUrl, GENERIC_BOOK_COVER } = require('./imageResolver');
 
-// Dados mockados para usar como fallback quando a API falhar
-const livrosMockados = [
-    { id: '1', title: 'O Hobbit', author: 'J.R.R. Tolkien', price: 39.90, image: 'https://covers.openlibrary.org/b/id/7887520-M.jpg', description: 'Uma aventura fantástica clássica.' },
-    { id: '2', title: '1984', author: 'George Orwell', price: 34.90, image: 'https://covers.openlibrary.org/b/id/7921457-M.jpg', description: 'Um romance distópico perturbador.' },
-    { id: '3', title: 'O Senhor dos Anéis', author: 'J.R.R. Tolkien', price: 89.90, image: 'https://covers.openlibrary.org/b/id/7887520-M.jpg', description: 'A épica fantástica mais famosa.' },
-    { id: '4', title: 'Ficção Científica', author: 'Isaac Asimov', price: 44.90, image: 'https://covers.openlibrary.org/b/id/7888029-M.jpg', description: 'Histórias de ficção científica clássicas.' },
-    { id: '5', title: 'O Código Da Vinci', author: 'Dan Brown', price: 39.90, image: 'https://covers.openlibrary.org/b/id/7880305-M.jpg', description: 'Um thriller de mistério envolvente.' },
-    { id: '6', title: 'A Revolução dos Bichos', author: 'George Orwell', price: 29.90, image: 'https://covers.openlibrary.org/b/id/7921457-M.jpg', description: 'Uma alegoria política poderosa.' },
-    { id: '7', title: 'O Grande Gatsby', author: 'F. Scott Fitzgerald', price: 34.90, image: 'https://covers.openlibrary.org/b/id/7920705-M.jpg', description: 'Um clássico da literatura americana.' },
-    { id: '8', title: 'Fundação', author: 'Isaac Asimov', price: 49.90, image: 'https://covers.openlibrary.org/b/id/7887520-M.jpg', description: 'Sci-fi épica com conceitos de psicohistória.' },
-    { id: '9', title: 'Dune', author: 'Frank Herbert', price: 59.90, image: 'https://covers.openlibrary.org/b/id/7887520-M.jpg', description: 'Uma épica de ficção científica espacial.' },
-    { id: '10', title: 'O Mundo de Sofia', author: 'Jostein Gaarder', price: 44.90, image: 'https://covers.openlibrary.org/b/id/7880305-M.jpg', description: 'Uma viagem filosófica através da história.' },
-    { id: '11', title: 'Cem Anos de Solidão', author: 'Gabriel García Márquez', price: 39.90, image: 'https://covers.openlibrary.org/b/id/7920705-M.jpg', description: 'Realismo mágico na América Latina.' },
-    { id: '12', title: 'O Alienista', author: 'Machado de Assis', price: 24.90, image: 'https://covers.openlibrary.org/b/id/7880305-M.jpg', description: 'Um clássico da literatura brasileira.' }
-];
+// Delay entre requisições (ms)
+const DELAY_MS = 1000;
 
-async function buscarLivros(query) {
+/**
+ * Busca livros no OpenLibrary (API pública sem rate limits)
+ */
+async function buscarLivrosOpenLibrary(query) {
     try {
-        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=12`;
-        console.log('[GoogleBooks] Buscando livros:', url);
+        console.log('[OpenLibrary] Buscando livros com query:', query);
+        const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(query)}&limit=12`;
         
         const response = await axios.get(url, { timeout: 5000 });
         
-        if (!response.data) {
-            console.warn('[GoogleBooks] Resposta vazia da API, usando dados mockados');
-            return livrosMockados;
+        if (!response.data || !response.data.docs) {
+            console.warn('[OpenLibrary] Resposta vazia');
+            return [];
         }
 
-        // Convertemos o formato do Google para o formato que seu catalogo.js já usa
-        const livros = (response.data.items || []).map(item => {
+        const livros = await Promise.all((response.data.docs || []).map(async (doc) => {
             try {
+                // OpenLibrary retorna cover_id, reconstruímos a URL
+                const imageUrl = doc.cover_id 
+                    ? `https://covers.openlibrary.org/b/id/${doc.cover_id}-M.jpg`
+                    : null; // Usar null em vez de string vazia
+                
+                const imagemResolvida = await resolveImageUrl(
+                    imageUrl,
+                    doc.title,
+                    doc.author_name?.[0] || '',
+                    'book'
+                );
+
                 return {
-                    id: item.id,
-                    title: item.volumeInfo?.title || 'Título desconhecido',
-                    author: item.volumeInfo?.authors?.join(', ') || 'Autor Desconhecido',
-                    price: item.saleInfo?.listPrice?.amount || 39.90,
-                    image: item.volumeInfo?.imageLinks?.thumbnail || '/fotos/default.jpg',
-                    description: item.volumeInfo?.description || 'Sem descrição disponível.'
+                    id: doc.key || `ol-${Math.random()}`,
+                    title: doc.title || 'Título desconhecido',
+                    author: doc.author_name?.join(', ') || 'Autor Desconhecido',
+                    price: 39.90, // OpenLibrary não fornece preço
+                    image: imagemResolvida,
+                    description: `Publicado em ${doc.first_publish_year || 'ano desconhecido'}`
                 };
             } catch (err) {
-                console.warn('[GoogleBooks] Erro ao mapear livro:', err.message);
+                console.warn('[OpenLibrary] Erro ao mapear livro:', err.message);
                 return null;
             }
-        }).filter(l => l !== null);
+        }));
         
-        console.log(`[GoogleBooks] Encontrados ${livros.length} livros`);
-        // prefixar ids para evitar colisões com mangás
-        const livrosComPrefixo = livros.map(l => ({ ...l, id: `g-${l.id}` }));
-        const mocksComPrefixo = livrosMockados.map(l => ({ ...l, id: `g-${l.id}` }));
-        return livrosComPrefixo.length > 0 ? livrosComPrefixo : mocksComPrefixo;
+        const livrosFiltrados = livros.filter(l => l !== null);
+        console.log(`[OpenLibrary] ✅ Processados ${livrosFiltrados.length} livros`);
+        return livrosFiltrados.map(l => ({ ...l, id: `o-${l.id}` }));
+        
     } catch (error) {
-        console.error("[GoogleBooks] Erro ao buscar livros:", error.message);
-        console.log('[GoogleBooks] Usando dados mockados como fallback');
-        // prefixar mocks antes de devolver
-        return livrosMockados.map(l => ({ ...l, id: `g-${l.id}` }));
+        console.error('[OpenLibrary] Erro:', error.message);
+        return [];
     }
+}
+
+/**
+ * Aguarda um tempo especificado
+ */
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Processa array de livros da API
+ */
+async function processarLivros(items) {
+    const livros = await Promise.all((items || []).map(async (item) => {
+        try {
+            const imageUrl = item.volumeInfo?.imageLinks?.thumbnail || '';
+            const imagemResolvida = await resolveImageUrl(
+                imageUrl,
+                item.volumeInfo?.title,
+                item.volumeInfo?.authors?.[0] || '',
+                'book'
+            );
+
+            return {
+                id: item.id,
+                title: item.volumeInfo?.title || 'Título desconhecido',
+                author: item.volumeInfo?.authors?.join(', ') || 'Autor Desconhecido',
+                price: item.saleInfo?.listPrice?.amount || 39.90,
+                image: imagemResolvida,
+                description: item.volumeInfo?.description || 'Sem descrição disponível.'
+            };
+        } catch (err) {
+            console.warn('[GoogleBooks] Erro ao mapear livro:', err.message);
+            return null;
+        }
+    }));
+    
+    const livrosFiltrados = livros.filter(l => l !== null);
+    console.log(`[GoogleBooks] Processados ${livrosFiltrados.length} livros com imagens`);
+    
+    // Prefixar IDs para evitar colisões com mangás
+    return livrosFiltrados.map(l => ({ ...l, id: `g-${l.id}` }));
+}
+
+/**
+ * Busca livros do Google Books com fallback automático para OpenLibrary
+ */
+async function buscarLivros(query) {
+    try {
+        // Tenta Google Books primeiro
+        console.log('[GoogleBooks] Tentando buscar com termo:', query);
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=12`;
+        
+        const response = await axios.get(url, { timeout: 5000 });
+        
+        if (response.data && response.data.items && response.data.items.length > 0) {
+            console.log('[GoogleBooks] ✅ Sucesso! Processando livros...');
+            return await processarLivros(response.data.items);
+        }
+    } catch (error) {
+        console.warn('[GoogleBooks] Falhou:', error.message);
+    }
+    
+    // Fallback: OpenLibrary (nunca falha por rate limit)
+    console.log('[Fallback] Usando OpenLibrary em vez de Google Books...');
+    await delay(DELAY_MS);
+    return await buscarLivrosOpenLibrary(query);
 }
 
 module.exports = { buscarLivros };

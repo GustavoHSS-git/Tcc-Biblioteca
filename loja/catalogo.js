@@ -77,6 +77,7 @@ const cart = new Cart();
 const booksGrid = document.getElementById("booksGrid");
 const searchInput = document.getElementById("searchInput");
 const sortSelect = document.getElementById("sortSelect");
+const categorySelect = document.getElementById("categorySelect");
 const cartBtn = document.getElementById("cartBtn");
 const cartModal = document.getElementById("cartModal");
 const detailModal = document.getElementById("detailModal");
@@ -170,7 +171,9 @@ async function searchExternal(tipo) {
         }
 
         if (resultados.length > 0) {
-            books = resultados;
+            // Carregar promoções e aplicar aos livros
+            const promotions = await loadPromotions();
+            books = applyPromotionsToBooks(resultados, promotions);
             filteredBooks = [...books];
             renderBooks(books);
             showNotification(`Encontrados ${resultados.length} resultados!`);
@@ -189,12 +192,9 @@ async function searchBooksFromAPI(searchTerm) {
         allBooks = await searchCombined(searchTerm);
 
         if (allBooks.length > 0) {
-            filteredBooks = allBooks;
-            renderBooks(filteredBooks);
-        } else {
-            showNotification("Nenhum resultado encontrado", "warning");
-        }
-    } catch (error) {
+            // Carregar promoções e aplicar aos livros
+            const promotions = await loadPromotions();
+            allBooks = applyPromotionsToBooks(allBooks, promotions);
         console.error("Erro na busca:", error);
         showNotification("Erro ao buscar", "error");
     }
@@ -211,6 +211,9 @@ async function filterByCategory(category) {
             books = await searchCombined('bestsellers');
         }
 
+        // Carregar promoções e aplicar aos livros
+        const promotions = await loadPromotions();
+        books = applyPromotionsToBooks(books, promotions);
         filteredBooks = [...books];
         renderBooks(filteredBooks);
     } catch (error) {
@@ -220,19 +223,136 @@ async function filterByCategory(category) {
 }
 
 // ============================================
+// 🎉 CARREGAR E APLICAR PROMOÇÕES
+// ============================================
+
+// Função para carregar promoções ativas
+async function loadPromotions() {
+    try {
+        const response = await fetch(`${API_URL}/promocoes`);
+        const result = await response.json();
+        
+        if (result.success) {
+            return result.data.filter(promo => {
+                const now = new Date();
+                const endDate = new Date(promo.end_date);
+                return endDate > now; // Apenas promoções ativas
+            });
+        }
+        return [];
+    } catch (error) {
+        console.error("Erro ao carregar promoções:", error);
+        return [];
+    }
+}
+
+// Função para aplicar promoções aos livros
+function applyPromotionsToBooks(books, promotions) {
+    return books.map(book => {
+        // Procurar promoção por ID, categoria ou global
+        let promotion = promotions.find(promo => promo.book_id == book.id);
+        
+        if (!promotion) {
+            // Aplicar por categoria (se a promoção tiver category)
+            promotion = promotions.find(promo => promo.category && (promo.category.toLowerCase() === (book.tipo || 'livro')));
+        }
+        
+        if (!promotion) {
+            // Promoção global (sem book_id e sem category)
+            promotion = promotions.find(promo => !promo.book_id && !promo.category);
+        }
+        
+        if (promotion) {
+            const originalPrice = book.price;
+            let discountedPrice = originalPrice;
+            
+            if (promotion.discount_type === 'percentual') {
+                discountedPrice = originalPrice * (1 - promotion.discount_value / 100);
+            } else if (promotion.discount_type === 'fixo') {
+                discountedPrice = Math.max(0, originalPrice - promotion.discount_value);
+            }
+            
+            return {
+                ...book,
+                originalPrice,
+                price: discountedPrice,
+                onPromotion: true,
+                discountType: promotion.discount_type,
+                discountValue: promotion.discount_value
+            };
+        }
+        return { ...book, onPromotion: false };
+    });
+}
+
+// ============================================
 // 📖 RENDERIZAR LIVROS
 // ============================================
 // Função que cria os cards (cartões) de cada livro no grid.
 // Recebe um array de livros e gera HTML com imagem, título, autor, preço e botões.
 // Botões: "Detalhes" (abre modal com info completa) e "Comprar" (adiciona ao carrinho).
+
+// Função auxiliar para obter URL válida de imagem com fallbacks
+function getValidImageUrl(book) {
+    console.log('getValidImageUrl chamado para:', book.title);
+    console.log('Campos de imagem disponíveis:', {
+        image: book.image,
+        imageLinks: book.imageLinks,
+        cover_image: book.cover_image,
+        image_url: book.image_url,
+        images: book.images,
+        volumeInfo: book.volumeInfo
+    });
+
+    // Prioriza diferentes campos de imagem
+    const possibleUrls = [
+        book.image,
+        book.imageLinks?.thumbnail,
+        book.imageLinks?.smallThumbnail,
+        book.cover_image,
+        book.image_url,
+        book.images?.[0], // primeira imagem do array
+        book.volumeInfo?.imageLinks?.thumbnail, // Google Books
+        book.images?.jpg?.image_url, // Jikan
+        book.images?.webp?.image_url // Jikan
+    ];
+
+    console.log('URLs possíveis:', possibleUrls);
+
+    // Retorna a primeira URL válida
+    for (const url of possibleUrls) {
+        if (url && typeof url === 'string' && url.startsWith('http')) {
+            console.log('URL válida encontrada:', url);
+            return url;
+        }
+    }
+
+    console.log('Nenhuma URL válida encontrada, usando fallback');
+    // Imagem padrão se nenhuma for encontrada
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCBmaWxsPSIjZGRkIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Q2FwYSBuw6NvIGRpc3BvbsOtdmVsPC90ZXh0Pjwvc3ZnPg==';
+}
+
 function renderBooks(booksToRender = books) {
-    booksGrid.innerHTML = booksToRender.map(book => `
+    booksGrid.innerHTML = booksToRender.map(book => {
+        const imageUrl = getValidImageUrl(book);
+        let priceHtml = `<div class="book-price">R$ ${book.price.toFixed(2)}</div>`;
+        
+        if (book.onPromotion) {
+            priceHtml = `
+                <div class="book-price">
+                    <span class="original-price">R$ ${book.originalPrice.toFixed(2)}</span>
+                    <span class="discounted-price">R$ ${book.price.toFixed(2)}</span>
+                </div>
+            `;
+        }
+        
+        return `
         <div class="book-card">
-            <img src="${book.image}" alt="${book.title}" class="book-image">
+            <img src="${imageUrl}" alt="${book.title}" class="book-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCBmaWxsPSIjY2NjIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJybzwvdGV4dD48L3N2Zz4=';">
             <div class="book-info">
                 <h3 class="book-title">${book.title}</h3>
                 <p class="book-author">por ${book.author}</p>
-                <div class="book-price">R$ ${book.price.toFixed(2)}</div>
+                ${priceHtml}
                 <div class="book-actions">
                         <button class="view-btn" onclick="showDetail('${book.id}')">Detalhes</button>
 
@@ -240,7 +360,8 @@ function renderBooks(booksToRender = books) {
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // ============================================
@@ -332,7 +453,8 @@ function showDetail(bookId) {
     currentDetailBookId = bookId;
 
     if (book) {
-        document.getElementById("detailImg").src = book.image;
+        const imageUrl = getValidImageUrl(book);
+        document.getElementById("detailImg").src = imageUrl;
         document.getElementById("detailTitle").textContent = book.title;
         document.getElementById("detailAuthor").textContent = `por ${book.author}`;
         document.getElementById("detailDescription").textContent = book.description;
@@ -361,12 +483,15 @@ function renderMoreByAuthor(author, currentId) {
         return;
     }
 
-    container.innerHTML = others.map(b => `
+    container.innerHTML = others.map(b => {
+        const imageUrl = getValidImageUrl(b);
+        return `
         <div class="more-card" onclick="showDetail('${b.id}')" role="button" tabindex="0">
-            <img src="${b.image}" alt="${b.title}" class="more-thumb">
+            <img src="${imageUrl}" alt="${b.title}" class="more-thumb" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCBmaWxsPSIjZGRkIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE1MCIvPjwvc3ZnPg=='">
             <div class="more-title">${b.title}</div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     // add keyboard accessibility (Enter key)
     container.querySelectorAll('.more-card').forEach(el => {
@@ -456,6 +581,14 @@ function showNotification(message, type = "success") {
 // Esses listeners ativam as funções acima ao interagir com a interface.
 searchInput.addEventListener("input", filterBooks);
 sortSelect.addEventListener("change", filterBooks);
+// Ao mudar a categoria, chama a função que carrega/filtera por tipo
+if (categorySelect) {
+    categorySelect.addEventListener("change", () => {
+        const val = categorySelect.value;
+        // 'all' é tratado como não-filtrado (carrega combinado)
+        filterByCategory(val === 'all' ? 'all' : val);
+    });
+}
 
 cartBtn.addEventListener("click", () => {
     cartModal.classList.add("active");
@@ -533,7 +666,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             // embaralhar para evitar repetições seguidas
             combinados = combinados.sort(() => Math.random() - 0.5);
 
-            books = combinados;
+            // Carregar promoções e aplicar aos livros
+            const promotions = await loadPromotions();
+            books = applyPromotionsToBooks(combinados, promotions);
             filteredBooks = [...books];
             renderBooks(books);
             updateCartUI();

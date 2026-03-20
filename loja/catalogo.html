@@ -21,7 +21,7 @@
                     </a>
                     <ul class="nav-links">
                         <li><a href="/inicial/i.html" class="nav-link">Início</a></li>
-                        <li><a href="/loja" class="nav-link">Loja</a></li>
+                        <li><a href="/loja/catalogo.html" class="nav-link">Loja</a></li>
                         <li><a href="/biblioteca" class="nav-link">Biblioteca</a></li>
                     </ul>
                 </div>
@@ -47,6 +47,12 @@
                     class="search-input" 
                     placeholder="Buscar por título ou autor..."
                 >
+                <!-- Select para escolher categoria: Todos / Livros / Mangás -->
+                <select id="categorySelect" class="category-select">
+                    <option value="all">Todos</option>
+                    <option value="livro">Livros</option>
+                    <option value="manga">Mangás</option>
+                </select>
                 <!-- Select para ordenação -->
                 <select id="sortSelect" class="sort-select">
                     <option value="name-asc">Nome (A-Z)</option>

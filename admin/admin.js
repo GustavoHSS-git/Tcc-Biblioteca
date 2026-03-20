@@ -1,8 +1,31 @@
 // Admin Panel - Gerenciamento de Livros (CRUD)
-const API_URL = '/api';
+// Configuração das URLs da sua API Local
+const API_BASE_URL = '/api'; 
+const BOOKS_API_URL = '/api/livros';      
+const PROMOTIONS_API_URL = '/api/promocoes'; 
 let books = [];
 let editingBookId = null;
 
+const showLivrosBtn = document.getElementById('showLivros');
+const showPromosBtn = document.getElementById('showPromos');
+const livrosSection = document.getElementById('livros-section');
+const promosSection = document.getElementById('promocoes-section');
+
+showLivrosBtn.addEventListener('click', () => {
+    livrosSection.classList.remove('hidden');
+    promosSection.classList.add('hidden');
+});
+
+showPromosBtn.addEventListener('click', () => {
+    promosSection.classList.remove('hidden');
+    livrosSection.classList.remove('hidden');
+    livrosSection.classList.add('hidden');
+});
+
+showPromosBtn.addEventListener('click', () => {
+    promosSection.classList.remove('hidden');
+    livrosSection.classList.add('hidden');
+});
 const bookForm = document.getElementById('bookForm');
 const booksList = document.getElementById('booksList');
 const cancelBtn = document.getElementById('cancelBtn');
@@ -10,19 +33,47 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 // Carregar livros da API
 async function loadBooks() {
+    // Não carrega livros locais, pois as promoções são globais ou por categoria
+}
+
+promotionForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const bookValue = document.getElementById('promotionBook').value;
+    let promoData = {
+        discount_value: parseFloat(document.getElementById('discountValue').value),
+        discount_type: document.getElementById('discountType').value,
+        start_date: document.getElementById('startDate').value,
+        end_date: document.getElementById('endDate').value
+    };
+
+    if (bookValue === 'all') {
+        // Promoção global
+    } else if (bookValue === 'book' || bookValue === 'manga') {
+        promoData.category = bookValue === 'book' ? 'livro' : 'manga';
+    } else {
+        // Livro específico
+        promoData.book_id = bookValue;
+    }
+
     try {
-        const response = await fetch(`${API_URL}/livros`);
+        const response = await fetch(PROMOTIONS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(promoData)
+        });
         const result = await response.json();
-        
-        if (result.success && result.data) {
-            books = result.data;
-            renderBooks();
+        if (result.success) {
+            alert('Promoção salva com sucesso!');
+            promotionForm.reset();
+            loadPromotions();
+        } else {
+            alert('Erro ao salvar promoção: ' + result.message);
         }
     } catch (error) {
-        console.error('Erro ao carregar livros:', error);
-        booksList.innerHTML = '<p class="loading">Erro ao carregar livros</p>';
+        alert('Erro ao salvar promoção na API');
     }
-}
+});
 
 // Renderizar lista de livros
 function renderBooks() {
@@ -93,7 +144,7 @@ bookForm.addEventListener('submit', async (e) => {
     try {
         if (editingBookId) {
             // UPDATE
-            const response = await fetch(`${API_URL}/livros/${editingBookId}`, {
+            const response = await fetch(`${BOOKS_API_URL}/${editingBookId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bookData)
@@ -103,13 +154,13 @@ bookForm.addEventListener('submit', async (e) => {
             if (result.success) {
                 alert('Livro atualizado com sucesso!');
                 resetForm();
-                await loadBooks();
+                // await loadBooks();
             } else {
                 alert('Erro ao atualizar livro: ' + result.message);
             }
         } else {
             // CREATE
-            const response = await fetch(`${API_URL}/livros`, {
+            const response = await fetch(`${BOOKS_API_URL}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bookData)
@@ -119,7 +170,7 @@ bookForm.addEventListener('submit', async (e) => {
             if (result.success) {
                 alert('Livro adicionado com sucesso!');
                 resetForm();
-                await loadBooks();
+                // await loadBooks();
             } else {
                 alert('Erro ao adicionar livro: ' + result.message);
             }
@@ -135,14 +186,14 @@ async function deleteBook(bookId) {
     if (!confirm('Tem certeza que deseja deletar este livro?')) return;
 
     try {
-        const response = await fetch(`${API_URL}/livros/${bookId}`, {
+        const response = await fetch(`${BOOKS_API_URL}/${bookId}`, {
             method: 'DELETE'
         });
 
         const result = await response.json();
         if (result.success) {
             alert('Livro deletado com sucesso!');
-            await loadBooks();
+            // await loadBooks();
         } else {
             alert('Erro ao deletar livro: ' + result.message);
         }
@@ -170,4 +221,4 @@ logoutBtn.addEventListener('click', () => {
 });
 
 // Carregar livros ao iniciar
-document.addEventListener('DOMContentLoaded', loadBooks);
+// document.addEventListener('DOMContentLoaded', loadBooks);
