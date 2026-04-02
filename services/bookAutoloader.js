@@ -1,7 +1,7 @@
 const axios = require('axios');
 const supabase = require('../supabase');
-const { buscarLivros } = require('../loja/services/googleBooks');
-const { buscarMangas } = require('../loja/services/jikan');
+const { buscarLivros } = require('../api/googleBooks');
+const { buscarMangas } = require('../api/jikan');
 
 class BookAutoloader {
   constructor() {
@@ -78,7 +78,7 @@ class BookAutoloader {
       descricao: book.description || '',
       capa_url: book.image || null,
       categoria: category,
-      preco: Math.round(parseFloat(book.price) || 29.90), // Converte para inteiro
+      preco: parseFloat(book.price) || 29.90, // Suporta decimais (ex: 29.90)
       id_externo: book.id || null,
       data_adicao: new Date().toISOString(),
       ativo: true

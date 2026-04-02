@@ -4,8 +4,9 @@ const { resolveImageUrl, GENERIC_MANGA_COVER } = require('./imageResolver');
 async function buscarMangas(query) {
     try {
         // A API Jikan v4 usa o endpoint /manga para pesquisas
-        const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(query)}&limit=12`;
-        console.log('[Jikan] Buscando mangás:', url);
+        // Stricter filtering: sfw=true (Safe For Work) and genres_exclude=9,12,49 (Ecchi, Hentai, Erotica)
+        const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(query)}&limit=12&sfw=true&genres_exclude=9,12,49&unapproved=false`;
+        console.log('[Jikan] Buscando mangás (SFW):', url);
         
         const response = await axios.get(url, { timeout: 5000 });
         
@@ -14,8 +15,17 @@ async function buscarMangas(query) {
             return [];
         }
 
+        // Palavras-chave proibidas para filtragem extra (opcional mas seguro)
+        const blacklistedKeywords = ['naked', 'nude', 'sexy', 'pervert', 'ecchi', 'xxx'];
+
         // Mapeamos o retorno da API para o formato que o seu catálogo espera
         const mangas = await Promise.all((response.data.data || []).map(async (manga) => {
+            // Filtragem local baseada no título e sinopse como camada extra de segurança
+            const fullText = (manga.title + ' ' + (manga.synopsis || '')).toLowerCase();
+            if (blacklistedKeywords.some(kw => fullText.includes(kw))) {
+                console.log(`[Jikan] Item filtrado (censura): ${manga.title}`);
+                return null;
+            }
             try {
                 const imageUrl = manga.images?.jpg?.image_url || '';
                 const imagemResolvida = await resolveImageUrl(

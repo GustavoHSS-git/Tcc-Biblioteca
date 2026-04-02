@@ -3,124 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Livraria</title>
-    <!-- CSS da página de login -->
+    <title>Acesso - Livraria Digital</title>
     <link rel="stylesheet" href="/Login/login.css">
+
+
 </head>
 <body>
-    <!-- ============================
-         CONTAINER PRINCIPAL DO LOGIN
-         ============================ -->
-    <div class="login-container" role="main" aria-labelledby="login-title">
-        <!-- Lado Esquerdo - Branding (oculto em mobile) -->
-        <!-- Contém logo e texto "Livraria Digital" -->
-        <div class="login-left">
-            <div class="login-branding">
-                <img src="../fotos/logo.png" alt="Logo Livraria" class="login-logo">
-                <h1>Livraria Digital</h1>
+    <div class="container" id="container">
+        <div class="form-container sign-up-container">
+            <form id="registerForm">
+                <img src="../fotos/logo3p.png" alt="Logo" class="form-logo" />
+                <h1>Criar Conta</h1>
+                <div class="social-container">
+                </div>
+                <span>Preencha seus dados para cadastro</span>
+                <input type="text" id="regNome" placeholder="Nome Completo" required />
+                <input type="email" id="regEmail" placeholder="Email" required />
+                <input type="password" id="regPassword" placeholder="Senha (mínimo 6 caracteres)" required />
+                <button type="submit" class="btn-primary">Cadastrar</button>
+            </form>
+        </div>
+
+        <div class="form-container sign-in-container">
+    <form id="loginForm">
+        <img src="../fotos/logo3p.png" alt="Logo" class="form-logo" />
+        
+        <h1>Login</h1>
+        <div class="social-container"></div>
+        <span>Entre com seu email e senha</span>
+        
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Senha" required />
+        
+        <button type="submit" class="btn-primary">Entrar</button>
+        <a href="#" class="forgot">Esqueceu sua senha?</a>
+    </form>
+</div>
+
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1>Bem-vindo de volta!</h1>
+                    <p>Para se manter conectado, por favor faça o login.</p>
+                    <button class="ghost" id="signIn">JÁ TENHO CONTA</button>
+                </div>
+
+                <div class="overlay-panel overlay-right">
+                    <h1>Olá Leitor!</h1>
+                    <p>faça login e comece sua jornada na nossa Livraria Digital</p>
+                    <button class="ghost" id="signUp">QUERO ME CADASTRAR</button>
+                </div>
             </div>
         </div>
 
-        <!-- Lado Direito - Formulário de Login -->
-        <div class="login-right">
-            <div class="login-box">
-                <!-- Logo pequeno no topo do formulário -->
-                <img src="../fotos/logo3p.png" alt="Logo Livraria" class="login-box-logo">
-                <h2 id="login-title">Bem-vindo</h2>
-                <p class="login-subtitle">Faça login para continuar</p>
-
-                <!-- ============================
-                     FORMULÁRIO DE LOGIN
-                     ============================ -->
-                <form id="loginForm" class="login-form">
-                    <!-- Campo Email -->
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            placeholder="seu@email.com"
-                            required
-                            aria-label="Email"
-                        >
-                        <!-- Mensagem de erro (mostrada via JS ao validar) -->
-                        <span class="error-message" id="emailError"></span>
-                    </div>
-
-                    <!-- Campo Senha -->
-                    <div class="form-group">
-                        <label for="password">Senha</label>
-                        <div class="password-wrapper">
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                placeholder="••••••••"
-                                required
-                                aria-label="Senha"
-                            >
-                            <!-- Botão para mostrar/esconder senha (👁️) -->
-                            <button type="button" class="toggle-password" id="togglePassword">
-                                👁️
-                            </button>
-                        </div>
-                        <!-- Mensagem de erro (mostrada via JS ao validar) -->
-                        <span class="error-message" id="passwordError"></span>
-                    </div>
-
-                    <!-- Opções: Lembrar-me e Esqueci a Senha -->
-                    <div class="form-options">
-                        <div class="remember-me">
-                            <input type="checkbox" id="remember" name="remember">
-                            <label for="remember">Lembrar-me</label>
-                        </div>
-                        <!-- Link para recuperação de senha -->
-                        <a href="#" class="forgot-password">Esqueci a senha</a>
-                    </div>
-
-                    <!-- Botão de Entrar (Submit) -->
-                    <button type="submit" class="btn-login">
-                        <span>Entrar</span>
-                    </button>
-                </form>
-
-                <!-- ============================
-                     DIVISOR ("OU")
-                     ============================ -->
-                <div class="divider">
-                    <span>Ou</span>
-                </div>
-
-                <!-- ============================
-                     LOGIN SOCIAL (Google)
-                     ============================ -->
-                <div class="social-login">
-                    <button type="button" class="btn-social btn-google" aria-label="Entrar com Google">
-                        <!-- Ícone Google em SVG -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-google" viewBox="0 0 16 16">
-                        <path d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z"/>
-                        </svg>
-                            <circle cx="24" cy="24" r="22" fill="#ffffff" />
-                            <path fill="#4285F4" d="M24 12c3.1 0 5.3 1.1 6.9 2l5.1-5.1C33.4 7 28.9 5 24 5 15.8 5 9 10.8 6.6 18.2l6 4.7C13.6 17 18.3 12 24 12z"/>
-                            <path fill="#34A853" d="M12.6 20.9A12.7 12.7 0 0012 24c0 2 .5 3.9 1.4 5.6l6-4.7C18.1 24.5 18 23.3 18 22c0-1.4.1-2.6.6-3.9l-6-4.2z"/>
-                            <path fill="#FBBC05" d="M24 43c5.1 0 9.5-1.8 12.6-4.8l-6-4.7C29 34.8 26.7 36 24 36c-5.7 0-10.4-5-12.4-11.6l-6 4.7C9 37.8 15.8 43 24 43z"/>
-                            <path fill="#EA4335" d="M41.4 14.6l-6 4.7C34 18.1 29.6 16 24 16c-5.7 0-10.4 5-12.4 11.6l6 4.7C18.1 29.8 20.4 28.6 24 28.6c2.9 0 5.2 1 6.7 2.6l6-4.7C35.3 20.5 30.4 18 24 18c-5.1 0-9.5 1.8-12.6 4.8l6 4.7C17.9 24.5 21.6 20 24 20c3.1 0 5.3 1.1 6.9 2l5.1-5.1z"/>
-                        </svg>
-                        <span>Google</span>
-                    </button>
-                </div>
-
-                <!-- ============================
-                     LINK DE CADASTRO
-                     ============================ -->
-                <p class="signup-text">
-                    Não tem uma conta? 
-                    <a href="#" class="signup-link">Cadastre-se</a>
-                </p>
-            </div>
-        </div>
     </div>
+
+    <!-- NOTIFICAÇÃO FLUTUANTE -->
+    <div id="toast" class="toast"></div>
 
     <script src="/Login/login.js"></script>
 </body>

@@ -29,6 +29,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 // Servir arquivos estáticos das subpastas
+app.use(express.static('public'));
 app.use('/Login', express.static(path.join(__dirname, 'front', 'Login')));
 app.use('/inicial', express.static(path.join(__dirname, 'front', 'inicial')));
 app.use('/biblioteca', express.static(path.join(__dirname, 'front', 'biblioteca')));
@@ -37,6 +38,7 @@ app.use('/leitura', express.static(path.join(__dirname, 'front', 'leitura')));
 app.use('/loja', express.static(path.join(__dirname, 'front', 'loja')));
 app.use('/admin', express.static(path.join(__dirname, 'front', 'admin')));
 app.use('/fotos', express.static(path.join(__dirname, 'front', 'fotos')));
+app.use('/perfil', express.static(path.join(__dirname, 'front', 'perfil')));
 
 
 // GET /api/animes?q=nome
@@ -67,100 +69,220 @@ app.get('/api/animes', async (req, res) => {
 
 const apiRoutes = require('./api/api');
 const { syncBuiltinESMExports } = require('module');
-app.use('/api', apiRoutes); // Isso fará com que as rotas de api.js funcionem sob /api/...
-
-// Rota para buscar Livros no Google Books
+app.use('/api', apiRoutes); // Isso fará com que as rotas de api.js funcionem
+// Rota para buscar Livros no Google Books (Smarter Search)
 app.get('/api/externo/livros', async (req, res) => {
     const { q } = req.query;
-    const cacheKey = 'livro_' + q.toLowerCase();
+    if (!q) return res.json({ success: true, data: [] });
+    
+    const cacheKey = 'google_v16_' + q.toLowerCase().trim();
 
     try {
-        // Tenta buscar da memória principal do Supabase
         const { data: cacheData } = await supabase.from('api_cache').select('json_data').eq('search_query', cacheKey).maybeSingle();
-        if (cacheData && cacheData.json_data) {
-            return res.json({ success: true, data: cacheData.json_data, log: "Do Banco do Supabase!" });
+        if (cacheData?.json_data) return res.json({ success: true, data: cacheData.json_data });
+
+        const apiKey = 'key=AIzaSyDBLlxQGqrbAD541dmNGPOyExA5qW-3goM';
+        
+        // Tenta primeiro uma busca por título para maior precisão
+        let response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(q)}&maxResults=20&printType=books&orderBy=relevance&${apiKey}`);
+        
+        // Se retornar pouco, tenta uma busca geral como fallback
+        if (!response.data.items || response.data.items.length < 5) {
+            response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=40&printType=books&orderBy=relevance&${apiKey}`);
         }
-    } catch (e) { console.warn("Erro ao ler cache do Supabase"); }
+        
+        if (!response.data.items) return res.json({ success: true, data: [] });
 
-    try {
-        // Usando a chave da API fornecida para ignorar completamente o limite do Google
-        const apiKey = '&key=AIzaSyDBLlxQGqrbAD541dmNGPOyExA5qW-3goM';
-        // Força a buscar apenas livros verdadeiros (ignorando revistas) com &printType=books
-        // E garante que a descrição/idioma seja em português com &langRestrict=pt
-        const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&printType=books&langRestrict=pt${apiKey}`);
-
-        // Mapear para o formato que o seu frontend já entende
-        const livros = response.data.items ? response.data.items.map(item => {
-            // Imagem super bonita como placeholder se não tiver capa
-            const fallbackCapa = 'https://placehold.co/300x450/222222/FFFFFF/png?text=Sem+Capa&font=oswald';
-            let highResImage = item.volumeInfo.imageLinks?.extraLarge || item.volumeInfo.imageLinks?.large || item.volumeInfo.imageLinks?.medium || item.volumeInfo.imageLinks?.thumbnail || fallbackCapa;
-            if (typeof highResImage === 'string' && highResImage !== fallbackCapa) {
-                highResImage = highResImage.replace('zoom=1', 'zoom=3').replace('&edge=curl', '');
-                // Converter HTTP para HTTPS se necessário
-                highResImage = highResImage.replace(/^http:\/\//i, 'https://');
+        const placeholder = 'https://placehold.co/300x450/222222/FFFFFF/png?text=Sem+Capa';
+        const searchTerms = q.toLowerCase().split(' ');
+        
+        let books = response.data.items.map(item => {
+            let img = item.volumeInfo.imageLinks?.thumbnail || item.volumeInfo.imageLinks?.smallThumbnail || placeholder;
+            
+            if (img && img !== placeholder) {
+                // Força zoom=4 para altíssima resolução nas capas (Google Books padrão é zoom=1)
+                img = img.replace(/zoom=[0-9]/, 'zoom=4').replace('&edge=curl', '').replace(/^http:\/\//i, 'https://');
             }
 
             return {
                 id: item.id,
                 title: item.volumeInfo.title,
                 author: item.volumeInfo.authors ? item.volumeInfo.authors.join(', ') : 'Autor Desconhecido',
-                price: item.saleInfo?.listPrice?.amount || 39.90, // Google nem sempre retorna preço
-                image: highResImage,
-                description: item.volumeInfo.description ? item.volumeInfo.description : 'Nenhuma sinopse fornecida pela editora.',
+                description: item.volumeInfo.description || 'Sem sinopse.',
+                image: img,
+                price: item.saleInfo?.listPrice?.amount || 39.90,
+                categories: item.volumeInfo.categories || [],
                 tipo: 'livro'
             };
-        }) : [];
+        });
 
-        // Salva silenciosamente no Banco caso tenha sucesso
-        if (livros.length > 0) {
-            await supabase.from('api_cache').upsert({ search_query: cacheKey, json_data: livros }, { onConflict: 'search_query' });
-        }
+        // FILTRO DE RELEVÂNCIA: Garante que o termo de busca está no título ou autor
+        // e remove guias de estudo/dicionários/resumos que poluem a busca de leitores
+        const unwantedKeywords = [
+            'summary', 'resumo', 'analysis', 'guia', 'guide', 'workbook', 'notebook', 'study',
+            'dictionary', 'dicionário', 'dicionario', 'thesaurus', 'vocabulary', 'glossary', 'glossário'
+        ];
+        
+        books = books.filter(b => {
+            const titleLower = b.title.toLowerCase();
+            const authorLower = b.author.toLowerCase();
+            const categories = (b.categories || []).map(c => c.toLowerCase());
+            
+            // 1. Deve ter pelo menos um dos termos da busca no título ou autor
+            const matchesQuery = searchTerms.some(term => titleLower.includes(term) || authorLower.includes(term));
+            
+            // 2. Não deve ser um item de "metadados" indesejado ou de categorias de referência
+            const isUnwanted = unwantedKeywords.some(word => 
+                (titleLower.includes(word) && !q.toLowerCase().includes(word))
+            );
 
-        res.json({ success: true, data: livros });
+            const isReference = categories.some(cat => 
+                cat.includes('reference') || cat.includes('dictionaries') || cat.includes('linguistics')
+            );
+
+            return matchesQuery && !isUnwanted && !isReference && b.image !== placeholder;
+        });
+
+        await supabase.from('api_cache').upsert({ search_query: cacheKey, json_data: books }, { onConflict: 'search_query' });
+        res.json({ success: true, data: books });
     } catch (error) {
-        console.warn("⚠️ API do Google falhou, retornando vazio ao invés de itens fantasmas!");
-        res.json({ success: true, data: [], isFallback: true });
+        console.error("Erro Google Books API:", error.message);
+        res.json({ success: true, data: [], error: true });
     }
 });
 
 // Rota para buscar Mangás no Jikan (MyAnimeList)
 app.get('/api/externo/mangas', async (req, res) => {
     const { q } = req.query;
-    const cacheKey = 'manga_' + q.toLowerCase();
+    if (!q) return res.json({ success: true, data: [] });
+
+    const cacheKey = 'manga_v10_' + q.toLowerCase().trim();
 
     try {
-        // Tenta buscar do Supabase primeiro
         const { data: cacheData } = await supabase.from('api_cache').select('json_data').eq('search_query', cacheKey).maybeSingle();
-        if (cacheData && cacheData.json_data) {
-            return res.json({ success: true, data: cacheData.json_data, log: "Do Banco do Supabase!" });
-        }
-    } catch (e) { console.warn("Erro ao ler cache do Supabase"); }
+        if (cacheData?.json_data) return res.json({ success: true, data: cacheData.json_data });
 
-    try {
-        // order_by=popularity garante que a obra original venha primeiro (e não spin-offs irrelevantes)
-        // limit=1 garante que TRAGA APENAS O MANGÁ QUE FOI PEDIDO, barrando spin-offs que ninguém pediu!
-        const response = await axios.get(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=1&sfw=true&type=manga&order_by=popularity&sort=asc`);
-        const mangas = response.data.data.map(manga => {
-            const fallbackCapa = 'https://placehold.co/300x450/222222/FFFFFF/png?text=Sem+Capa&font=oswald';
-            return {
-                id: manga.mal_id,
-                title: manga.title,
-                author: manga.authors ? manga.authors.map(a => a.name).join(', ') : 'Autor Desconhecido',
-                price: 45.00, // API Jikan não fornece preços de venda
-                image: manga.images?.jpg?.large_image_url || manga.images?.jpg?.image_url || fallbackCapa,
-                description: manga.synopsis ? manga.synopsis : 'Sinopse não disponível.',
-                tipo: 'manga'
-            }
-        });
+        
+        const response = await axios.get(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=20&type=manga&sfw=true`);
+        
+        if (!response.data.data) return res.json({ success: true, data: [] });
 
-        if (mangas.length > 0) {
-            await supabase.from('api_cache').upsert({ search_query: cacheKey, json_data: mangas }, { onConflict: 'search_query' });
-        }
+        const placeholder = 'https://placehold.co/300x450/222222/FFFFFF/png?text=Sem+Capa';
+        const searchTerms = q.toLowerCase().split(' ');
 
+        const mangas = response.data.data
+            .map(m => {
+                let img = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url;
+                
+                if (img && (img.includes('manga_placeholder') || img.includes('nophoto'))) {
+                    img = placeholder;
+                }
+
+                return {
+                    id: m.mal_id,
+                    title: m.title,
+                    author: m.authors ? m.authors.map(a => a.name).join(', ') : 'Autor Desconhecido',
+                    price: 45.00,
+                    image: img || placeholder,
+                    description: m.synopsis || 'Sinopse não disponível.',
+                    tipo: 'manga'
+                };
+            })
+            .filter(m => {
+                // Filtro de relevância para evitar resultados completamente aleatórios
+                const titleLower = m.title.toLowerCase();
+                // Deve conter pelo menos o primeiro termo da busca no título (mais rigoroso)
+                return titleLower.includes(searchTerms[0]) && m.image !== placeholder;
+            });
+
+        await supabase.from('api_cache').upsert({ search_query: cacheKey, json_data: mangas }, { onConflict: 'search_query' });
         res.json({ success: true, data: mangas });
     } catch (error) {
-        console.warn("⚠️ API Jikan falhou, retornando vazio ao invés de itens fantasmas para a busca:", q);
-        res.json({ success: true, data: [], isFallback: true });
+        console.error("Erro Jikan API:", error.message);
+        res.json({ success: true, data: [], error: true });
+    }
+});
+
+// GET /api/externo/livro/:id - Busca UM ÚNICO livro no Google Books pelo Volume ID
+app.get('/api/externo/livro/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const apiKey = 'key=AIzaSyDBLlxQGqrbAD541dmNGPOyExA5qW-3goM';
+        const response = await axios.get(`https://www.googleapis.com/books/v1/volumes/${id}?${apiKey}`);
+        const item = response.data;
+        
+        // CORREÇÃO: Forçar Alta Resolução máxima (do zoom=1 até o zoom=5)
+        let img = item.volumeInfo.imageLinks?.extraLarge || item.volumeInfo.imageLinks?.large || item.volumeInfo.imageLinks?.medium || item.volumeInfo.imageLinks?.thumbnail || 'https://placehold.co/300x450/222222/FFFFFF/png?text=Sem+Capa';
+        if (typeof img === 'string') {
+            // Remove limitações de zoom e bordas do Google para imagem nítida
+            img = img.replace(/zoom=[0-9]/, 'zoom=3').replace('&edge=curl', '').replace(/^http:\/\//i, 'https://');
+        }
+
+        const book = {
+            id: item.id,
+            title: item.volumeInfo.title,
+            author: item.volumeInfo.authors ? item.volumeInfo.authors.join(', ') : 'Autor Desconhecido',
+            price: item.saleInfo?.listPrice?.amount || 39.90,
+            image: img,
+            description: item.volumeInfo.description || 'Sem sinopse.',
+            publisher: item.volumeInfo.publisher,
+            publishedDate: item.volumeInfo.publishedDate,
+            pageCount: item.volumeInfo.pageCount,
+            category: item.volumeInfo.categories ? item.volumeInfo.categories[0] : 'Literatura',
+            tipo: 'livro'
+        };
+
+        // AUTO-SAVE: Salvar no Banco se não existir
+        try {
+            await supabase.from('livros').upsert({
+                titulo: book.title,
+                autor: book.author,
+                preco: book.price,
+                capa_url: book.image,
+                descricao: book.description.substring(0, 5000), // Limite de texto
+                categoria: 'livro'
+            }, { onConflict: 'titulo, autor' });
+        } catch (e) { console.log("Erro ao persistir livro externo."); }
+        
+        res.json({ success: true, data: book });
+    } catch (error) {
+        res.status(404).json({ success: false, message: "Livro externo não encontrado" });
+    }
+});
+
+// GET /api/externo/manga/:id - Busca UM ÚNICO mangá no Jikan pelo MAL ID
+app.get('/api/externo/manga/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const response = await axios.get(`https://api.jikan.moe/v4/manga/${id}`);
+        const manga = response.data.data;
+        
+        const data = {
+            id: manga.mal_id,
+            title: manga.title,
+            author: manga.authors ? manga.authors.map(a => a.name).join(', ') : 'Autor Desconhecido',
+            price: 45.00,
+            image: manga.images?.jpg?.large_image_url || manga.images?.jpg?.image_url,
+            description: manga.synopsis || 'Sinopse não disponível.',
+            category: 'Mangá',
+            tipo: 'manga'
+        };
+
+        // AUTO-SAVE: Salvar no Banco se não existir
+        try {
+            await supabase.from('livros').upsert({
+                titulo: data.title,
+                autor: data.author,
+                preco: data.price,
+                capa_url: data.image,
+                descricao: data.description.substring(0, 5000),
+                categoria: 'manga'
+            }, { onConflict: 'titulo, autor' });
+        } catch (e) { console.log("Erro ao persistir mangá externo."); }
+        
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(404).json({ success: false, message: "Mangá externo não encontrado" });
     }
 });
 
@@ -173,19 +295,35 @@ app.get('/api/externo/mais-vendidos', async (req, res) => {
     try {
         const apiKey = '&key=AIzaSyDBLlxQGqrbAD541dmNGPOyExA5qW-3goM';
         
-        // 1. Busca os Mangás Mais Populares de TODOS os tempos usando a rota V4 Top
-        const jikanReq = axios.get(`https://api.jikan.moe/v4/top/manga?type=manga&filter=bypopularity&limit=5`);
+        // ============================================
+        // ✍️ LISTA VIP: COLOQUE AQUI OS LIVROS QUE VOCÊ QUER ESCOLHER !
+        // (Basta adicionar o nome entre aspas e separado por virgula)
+        // ============================================
+        const LIVROS_ESCOLHIDOS = [
+            "Harry Potter", 
+            "Duna", 
+            "Percy Jackson", 
+            "Senhor dos Anéis", 
+            "The Witcher", 
+            "Game of Thrones", 
+            "Crepúsculo", 
+            "Jogos Vorazes", 
+            "As Crônicas de Nárnia", 
+            "O Hobbit",
+            "Maze Runner"
+        ];
+
+        // 1. Mangás Famosos (Top 20 do Jikan)
+        const jikanReq = axios.get(`https://api.jikan.moe/v4/top/manga?type=manga&filter=bypopularity&limit=20&sfw=true`);
         
-        // 2. Busca livros populares (bestsellers) usando termos amplos e ordenando pelo Google
-        // Usamos inauthor de autores renomados de fantasia para o top-tier ter qualidade
-        const googleReq1 = axios.get(`https://www.googleapis.com/books/v1/volumes?q=subject:"fiction"&orderBy=relevance&printType=books&langRestrict=pt&maxResults=5${apiKey}`);
-        const googleReq2 = axios.get(`https://www.googleapis.com/books/v1/volumes?q=subject:"fantasy"&orderBy=relevance&printType=books&langRestrict=pt&maxResults=5${apiKey}`);
+        // 2. Busca OS LIVROS ESCOLHIDOS ACIMA (Google Books)
+        const queryESCOLHIDOS = LIVROS_ESCOLHIDOS.map(t => `intitle:${t}`).join(' OR ');
+        const googleSagasReq = axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(queryESCOLHIDOS)}&orderBy=relevance&printType=books&langRestrict=pt&maxResults=40${apiKey}`);
         
-        const [jikanRes, gRes1, gRes2] = await Promise.allSettled([jikanReq, googleReq1, googleReq2]);
+        const [jikanRes, gSagasRes] = await Promise.allSettled([jikanReq, googleSagasReq]);
         
         let combinados = [];
         
-        // Processar mangás top (são garantidos como obras principais)
         if (jikanRes.status === 'fulfilled' && jikanRes.value.data.data) {
             const mangasTop = jikanRes.value.data.data.map(manga => ({
                 id: manga.mal_id,
@@ -199,7 +337,6 @@ app.get('/api/externo/mais-vendidos', async (req, res) => {
             combinados.push(...mangasTop);
         }
         
-        // Função auxiliar para mapear livros
         const formatGoogleBooks = (apiResponse) => {
             if (!apiResponse.data.items) return [];
             return apiResponse.data.items.map(item => {
@@ -208,24 +345,27 @@ app.get('/api/externo/mais-vendidos', async (req, res) => {
                     id: item.id,
                     title: item.volumeInfo.title,
                     author: item.volumeInfo.authors ? item.volumeInfo.authors.join(', ') : 'Autor Desconhecido',
-                    price: item.saleInfo?.listPrice?.amount || Math.floor(Math.random() * 40) + 20,
-                    image: img.replace(/^http:\/\//i, 'https://').replace('zoom=1', 'zoom=3'),
+                    price: item.saleInfo?.listPrice?.amount || 42.90,
+                    image: img.replace(/^http:\/\//i, 'https://').replace(/zoom=[0-9]/, 'zoom=4'),
                     description: item.volumeInfo.description ? item.volumeInfo.description : 'Sem sinopse.',
                     tipo: 'livro'
                 };
             });
         };
         
-        if (gRes1.status === 'fulfilled') combinados.push(...formatGoogleBooks(gRes1.value));
-        if (gRes2.status === 'fulfilled') combinados.push(...formatGoogleBooks(gRes2.value));
+        if (gSagasRes.status === 'fulfilled') combinados.push(...formatGoogleBooks(gSagasRes.value));
         
-        // Filtra para remover livros muito genéricos indesejados e mistura 
-        combinados = combinados.filter(c => c.image && !c.image.includes('Sem+Capa'));
+        // Filtro Final: Remove "Sherlock" e capas vazias
+        combinados = combinados.filter(c => {
+            const lowTitle = c.title.toLowerCase();
+            return c.image && !c.image.includes('Sem+Capa') && !lowTitle.includes('sherlock');
+        });
+
         combinados.sort(() => Math.random() - 0.5);
         
         res.json({ success: true, data: combinados });
     } catch (error) {
-        console.error("Erro ao buscar top sellers globais:", error);
+        console.error("Erro ao buscar famosos:", error);
         res.status(500).json({ success: false, data: [] });
     }
 });
@@ -295,6 +435,13 @@ app.get('/api/livros/mais-vendidos', async (req, res) => {
 // GET /api/livros/:id - Retorna um livro específico (Supabase)
 app.get('/api/livros/:id', async (req, res) => {
     const { id } = req.params;
+    
+    // Validar se o ID segue o formato UUID antes de buscar no banco (evita erro 500 em IDs numéricos)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+        return res.status(404).json({ success: false, message: "ID não é local" });
+    }
+
     try {
         const { data: book, error } = await supabase
             .from('livros')
@@ -466,8 +613,17 @@ app.get('/api/supabase-test', async (req, res) => {
 
 // POST /api/livros - Criar novo livro
 app.post('/api/livros', async (req, res) => {
-    // Extrai campos do corpo ou você pode enviar todo objeto via spread
-    const payload = { ...req.body };
+    const { title, author, price, image, description, category, titulo, autor, preco, capa_url, categoria, descricao } = req.body;
+    
+    const payload = {
+        titulo: titulo || title,
+        autor: autor || author,
+        preco: preco || price,
+        capa_url: capa_url || image,
+        categoria: categoria || category,
+        descricao: descricao || description
+    };
+
     try {
         const { data, error } = await supabase.from('livros').insert(payload).single();
         if (error) throw error;
@@ -482,7 +638,17 @@ app.post('/api/livros', async (req, res) => {
 // PUT /api/livros/:id - Atualizar livro (Supabase)
 app.put('/api/livros/:id', async (req, res) => {
     const bookId = req.params.id;
-    const payload = { ...req.body };
+    const { title, author, price, image, description, category, titulo, autor, preco, capa_url, categoria, descricao } = req.body;
+    
+    const payload = {
+        titulo: titulo || title,
+        autor: autor || author,
+        preco: preco || price,
+        capa_url: capa_url || image,
+        categoria: categoria || category,
+        descricao: descricao || description
+    };
+
     try {
         const { data, error } = await supabase
             .from('livros')
@@ -608,8 +774,125 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'front', 'admin', 'admin.html'));
 });
 
+app.get('/perfil', (req, res) => {
+    res.sendFile(path.join(__dirname, 'front', 'perfil', 'perfil.html'));
+});
+
 
 // Iniciar servidor
+// ============================================
+// 🔐 AUTHENTICATION ENDPOINTS (LOGIN / REGISTER)
+// ============================================
+
+// POST /api/login - Autenticar usuário via Supabase Auth
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+    
+    try {
+        console.log(`[AUTH] Tentativa de login para: ${email}`);
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (error) {
+            console.error('[AUTH] Erro no login (Supabase):', error.message);
+            throw error;
+        }
+
+        console.log('[AUTH] Login bem-sucedido para:', data.user.email);
+        
+        // --- RECUPERAÇÃO AUTOMÁTICA DE PERFIL ---
+        // Verifica se o perfil existe no banco. Se não, tenta criar na hora.
+        const { data: profileCheck } = await supabase.from('perfil').select('id').eq('id', data.user.id).maybeSingle();
+        if (!profileCheck) {
+            console.warn('[AUTH] Perfil não encontrado no Login. Tentando criar agora...');
+            await supabase.from('perfil').insert([{ 
+                id: data.user.id, 
+                nome: data.user.user_metadata.full_name || data.user.email.split('@')[0], 
+                email: data.user.email 
+            }]);
+        }
+
+        // Sucesso no login
+        res.json({ 
+            success: true, 
+            message: 'Login realizado com sucesso',
+            user: data.user,
+            session: data.session
+        });
+    } catch (err) {
+        console.error('[AUTH] Exceção no endpoint /api/login:', err.message);
+        res.status(401).json({ 
+            success: false, 
+            message: 'Erro ao autenticar: ' + err.message 
+        });
+    }
+});
+
+// POST /api/register - Criar novo usuário via Supabase Auth + Inserir no Perfil
+app.post('/api/register', async (req, res) => {
+    const { email, password, nome } = req.body;
+    
+    try {
+        console.log(`[AUTH] Tentativa de cadastro para: ${email}`);
+        // 1. Cria o usuário no Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: nome,
+                }
+            }
+        });
+
+        if (error) {
+            console.error('[AUTH] Erro no signUp (Supabase):', error.message);
+            throw error;
+        }
+
+        console.log('[AUTH] Usuário criado no Auth. ID:', data.user?.id);
+
+        // 2. Se o usuário foi criado com sucesso, insere na tabela 'perfil'
+        if (data.user) {
+            console.log('[DB] Tentando criar perfil na tabela "perfil"...');
+            const { error: profileError } = await supabase
+                .from('perfil')
+                .insert([
+                    { 
+                        id: data.user.id, // O ID do perfil deve ser o mesmo do Auth
+                        nome: nome,
+                        email: email
+                    }
+                ]);
+
+            if (profileError) {
+                console.error("[DB] Erro ao criar perfil na tabela 'perfil':", profileError.message);
+                // Não travamos o processo aqui, mas podemos informar o erro no log
+            } else {
+                console.log('[DB] Perfil criado com sucesso!');
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Cadastro realizado com sucesso! Verifique seu email se necessário.',
+            user: data.user
+        });
+    } catch (err) {
+        console.error('[AUTH] Exceção no endpoint /api/register:', err.message);
+        res.status(400).json({ 
+            success: false, 
+            message: 'Erro ao cadastrar: ' + err.message 
+        });
+    }
+});
+const fs = require('fs');
+const cssPath = path.join(__dirname, 'front', 'Login', 'login.css');
+console.log('O arquivo CSS existe neste caminho?', fs.existsSync(cssPath));
+console.log('Caminho tentado:', cssPath);
+
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
     console.log(`📚 Biblioteca Digital - Página inicial: Login`);

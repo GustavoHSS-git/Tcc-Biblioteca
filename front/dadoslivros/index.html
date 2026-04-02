@@ -18,14 +18,18 @@
                     </a>
                     <ul class="nav-links">
                         <li><a href="/inicial/i.html" class="nav-link">Início</a></li>
-                        <li><a href="/loja" class="nav-link">Loja</a></li>
-                        <li><a href="/biblioteca" class="nav-link">Biblioteca</a></li>
+                        <li><a href="/loja/catalogo.html" class="nav-link">Loja</a></li>
+                        <li><a href="/biblioteca/bibliotecaindex.html" class="nav-link">Biblioteca</a></li>
+                        <li><a href="/perfil/perfil.html" class="nav-link">Perfil</a></li>
                     </ul>
                 </div>
                 <div class="nav-right">
                     <button class="cart-btn" id="cartBtn">
                         🛒 Carrinho (<span id="cartCount">0</span>)
                     </button>
+                </div>
+                <div class="nav-right">
+                    <button id="logoutBtn" class="logout-btn">Sair</button>
                 </div>
             </div>
         </nav>
@@ -37,17 +41,17 @@
             <!-- COLUNA 1: CAPA -->
             <div class="book-cover-section">
                 <div class="book-cover">
-                    <img src="/fotos/paginas/dbz1.jpg" alt="Capa do livro Dragon Ball Super Vol. 1">
+                    <img src="/fotos/default-book.png" alt="Capa do livro" id="mainCover">
                 </div>
             </div>
 
             <!-- COLUNA 2: INFORMAÇÕES -->
             <div class="book-info-section">
-                <h1 class="book-title">Dragon Ball Super - Vol. 1</h1>
+                <h1 class="book-title">Carregando livro...</h1>
                 
                 <div class="book-meta">
-                    <span class="author">por <strong>Akira Toriyama</strong></span>
-                    <span class="category">Mangá</span>
+                    <span class="author">por <strong>Aguarde</strong></span>
+                    <span class="category">—</span>
                 </div>
 
                 <!-- AVALIAÇÃO -->
@@ -64,10 +68,7 @@
 
                 <!-- DESCRIÇÃO -->
                 <p class="book-description">
-                    Alguns meses se passaram desde a grande luta entre Goku e Majin Boo. 
-                    Mas uma nova ameaça vem para acabar com a paz. Parece que o próximo inimigo 
-                    vem do Sexto Universo e nossos heróis mal podem esperar para enfrentá-lo e testar sua força. 
-                    A aclamada série de Akira Toriyama finalmente tem a sua continuação.
+                    Buscando sinopse no banco de dados...
                 </p>
 
                 <!-- AVALIAÇÃO DO USUÁRIO -->
@@ -88,7 +89,7 @@
             <div class="book-purchase-section">
                 <div class="price-box">
                     <p class="price-label">Preço</p>
-                    <p class="price-amount">R$ 49,90</p>
+                    <p class="price-amount"></p>
                 </div>
 
                 <button class="btn-buy">Comprar Agora</button>
@@ -97,17 +98,17 @@
                 <div class="book-details-box">
                     <h4>Informações</h4>
                     <ul class="details-list">
-                        <li><strong>Autor:</strong> Akira Toriyama</li>
-                        <li><strong>Editora:</strong> Panini</li>
-                        <li><strong>Gênero:</strong> Mangá</li>
-                        <li><strong>Páginas:</strong> 200+</li>
-                        <li><strong>ISBN:</strong> 978-8532531234</li>
+                        <li><strong>Autor:</strong></li>
+                        <li><strong>Editora:</strong></li>
+                        <li><strong>Gênero:</strong></li>
+                        <li><strong>Páginas:</strong></li>
+                        <li><strong>ISBN:</strong></li>
                     </ul>
                 </div>
 
                 <div class="author-bio-box">
                     <h4>Sobre o Autor</h4>
-                    <p>Akira Toriyama é um renomado mangaká japonês, mundialmente conhecido por criar Dragon Ball e Dr. Slump, duas das obras mais influentes da história dos mangás.</p>
+                    <p></p>
                 </div>
             </div>
         </div>
@@ -117,27 +118,28 @@
             <h2>Livros Relacionados</h2>
             <div class="related-books-grid">
                 <div class="related-book-card">
-                    <img src="/fotos/paginas/dbz2.jpg" alt="">
-                    <h4>Jujutsu Kaisen</h4>
-                    <p class="author-small">Gege Akutami</p>
-                    <span class="price-small">R$ 35,00</span>
+                    <img src="" alt="">
+                    <h4></h4>
+                    <p class="author-small"></p>
+                    <span class="price-small"></span>
                 </div>
                 <div class="related-book-card">
-                    <img src="/fotos/paginas/dbz3.jpg" alt="Dragon Ball Super Vol. 3">
-                    <h4>Dragon Ball Super Vol. 3</h4>
-                    <p class="author-small">Akira Toriyama</p>
-                    <span class="price-small">R$ 49,90</span>
+                    <img src="" alt="">
+                    <h4></h4>
+                    <p class="author-small"></p>
+                    <span class="price-small"></span>
                 </div>
                 <div class="related-book-card">
-                    <img src="/fotos/paginas/dbz4.jpg" alt="Dragon Ball Super Vol. 4">
-                    <h4>Dragon Ball Super Vol. 4</h4>
-                    <p class="author-small">Akira Toriyama</p>
-                    <span class="price-small">R$ 49,90</span>
+                    <img src="" alt="">
+                    <h4></h4>
+                    <p class="author-small"></p>
+                    <span class="price-small"></span>
                 </div>
             </div>
         </div>
     </main>
 
+    <script src="/loja/navbar-auth.js"></script>
     <script src="/dadoslivros/dadoslivro.js"></script>
     
     <script>

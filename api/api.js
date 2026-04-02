@@ -20,26 +20,47 @@ router.get('/livros', async (req, res) => {
 
 // POST /api/livros - Criar um novo livro
 router.post('/livros', async (req, res) => {
-    const { title, author, price, image, description } = req.body;
+    const { title, author, price, image, description, category, titulo, autor, preco, capa_url, descricao, categoria } = req.body;
+    
+    // Suporte para ambos os formatos (CamelCase do front vs snake_case do banco)
+    const payload = {
+        titulo: titulo || title,
+        autor: autor || author,
+        preco: preco || price,
+        capa_url: capa_url || image,
+        descricao: descricao || description,
+        categoria: categoria || category
+    };
+    
     try {
-        const { data, error } = await supabase.from('livros').insert([{ title, author, price, image, description }]).select();
+        const { data, error } = await supabase.from('livros').insert([payload]).select();
         if (error) throw error;
         res.json({ success: true, data });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Erro ao criar livro" });
+        res.status(500).json({ success: false, message: "Erro ao criar livro", details: error.message });
     }
 });
 
 // PUT /api/livros/:id - Atualizar um livro
 router.put('/livros/:id', async (req, res) => {
     const { id } = req.params;
-    const { title, author, price, image, description } = req.body;
+    const { title, author, price, image, description, category, titulo, autor, preco, capa_url, descricao, categoria } = req.body;
+    
+    const payload = {
+        titulo: titulo || title,
+        autor: autor || author,
+        preco: preco || price,
+        capa_url: capa_url || image,
+        descricao: descricao || description,
+        categoria: categoria || category
+    };
+    
     try {
-        const { data, error } = await supabase.from('livros').update({ title, author, price, image, description }).eq('id', id).select();
+        const { data, error } = await supabase.from('livros').update(payload).eq('id', id).select();
         if (error) throw error;
         res.json({ success: true, data });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Erro ao atualizar livro" });
+        res.status(500).json({ success: false, message: "Erro ao atualizar livro", details: error.message });
     }
 });
 
@@ -63,13 +84,10 @@ router.delete('/livros/:id', async (req, res) => {
 router.get('/promocoes', async (req, res) => {
     try {
         const { data, error } = await supabase.from('promocoes').select('*');
-        if (error) {
-            console.error('Erro na tabela promocoes no Supabase:', error.message);
-            throw error;
-        }
+        if (error) throw error;
         res.json({ success: true, data });
     } catch (error) {
-        console.warn("⚠️ Usando fallback vazio para promoções devido a erro (tabela pode não existir).");
+        // Retorna vazio silenciosamente se a tabela não existir
         res.json({ success: true, data: [] });
     }
 });
@@ -137,11 +155,22 @@ router.delete('/promocoes/:id', async (req, res) => {
 // ============================================
 router.get('/perfil/:id', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('perfil').select('*').eq('id', req.params.id).single();
+        const { data, error } = await supabase
+            .from('perfil')
+            .select('*')
+            .eq('id', req.params.id)
+            .maybeSingle(); // Usar maybeSingle para não disparar erro se não encontrar
+        
         if (error) throw error;
+
+        if (!data) {
+            return res.status(404).json({ success: false, message: "Perfil ainda não configurado para este usuário." });
+        }
+
         res.json({ success: true, data });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Erro ao buscar perfil", details: error.message });
+        console.error('Erro ao buscar perfil:', error.message);
+        res.status(500).json({ success: false, message: "Erro ao buscar perfil no servidor", details: error.message });
     }
 });
 
@@ -177,6 +206,23 @@ router.post('/avaliacoes', async (req, res) => {
         res.json({ success: true, data });
     } catch (error) {
         res.status(500).json({ success: false, message: "Erro ao criar avaliação" });
+    }
+});
+
+// GET /api/avaliacoes/user/:id - Listar todas as avaliações de um usuário específico
+router.get('/avaliacoes/user/:id', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('avaliacoes')
+            .select('*, livros(*)')
+            .eq('perfil_id', req.params.id);
+        
+        if (error) throw error;
+        
+        // Formatar para incluir informações do livro no padrão esperado pelo front
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao buscar avaliações do usuário", details: error.message });
     }
 });
 

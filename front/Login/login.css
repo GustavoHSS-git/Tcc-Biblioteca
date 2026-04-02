@@ -1,517 +1,290 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
 
-/* ============================================
-   VARIÁVEIS CSS GLOBAIS
-   ============================================ */
-/* Cores e sombras reutilizáveis em todo o login.
-   --accent: azul principal (inputs, botão, links)
-   --shadow-*: sombras em diferentes intensidades */
-:root {
-    --accent: #0d6efd;      /* Azul principal */
-    --muted: #999;          /* Cinza para texto secundário */
-    --bg: #ffffff;          /* Fundo branco do container */
-    --shadow-strong: 0 18px 50px rgba(0,0,0,0.18);  /* Sombra forte */
-    --shadow-soft: 0 6px 18px rgba(0,0,0,0.08);     /* Sombra suave */
-}
-
+/* --- CONFIGURAÇÕES GLOBAIS --- */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+	box-sizing: border-box;
 }
 
-/* ============================================
-   FUNDO (BODY)
-   ============================================ */
-/* Gradiente azul claro; flexbox centra o container. */
 body {
-    background: linear-gradient(180deg,#eaf4ff 0%, #f5f7fa 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	background: #f6f5f7;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	font-family: 'Montserrat', sans-serif;
+	height: 100vh;
+	margin: -20px 0 50px;
 }
 
-/* ============================================
-   CONTAINER PRINCIPAL DO LOGIN
-   ============================================ */
-/* Caixa branca com 480x640px, sombra, e animação de entrada (popIn).
-   Hover: levanta (translateY) e aumenta sombra. */
-.login-container {
-    display: flex;
-    width: 480px;
-    max-width: 480px;
-    height: 640px;
-    background: var(--bg);
+h1 {
+	font-weight: bold;
+	margin: 0;
+	font-size: 2rem;
+}
+
+h2 {
+	text-align: center;
+}
+
+p {
+	font-size: 14px;
+	font-weight: 100;
+	line-height: 20px;
+	letter-spacing: 0.5px;
+	margin: 20px 0 30px;
+}
+
+span {
+	font-size: 12px;
+	margin-bottom: 12px;
+}
+
+a {
+    display: inline-block;
+    color: #333;
+    font-size: 14px;
+    text-decoration: none;
+    margin: 15px 0;
+    padding: 4px 8px; 
     border-radius: 20px;
-    overflow: visible;
-    box-shadow: var(--shadow-strong);
-    transition: transform 220ms ease, box-shadow 220ms ease;
-    animation: popIn 260ms ease both;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+a:hover {
+    transform: scale(1.3);
+    background-color: #0d6dfd; 
+    color: #ffffff;
+}
+	 
+
+button {
+	border-radius: 20px;
+	border: 1px solid #0d6efd;
+	background-color: #0d6efd;
+	color: #FFFFFF;
+	font-size: 12px;
+	font-weight: bold;
+	padding: 12px 45px;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    cursor: pointer;
+
 }
 
-.login-container:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 28px 70px rgba(0,0,0,0.12);
+button:hover {	
+	transform: scale(0.95);
+}
+button:active {
+	transform: scale(0.95);
 }
 
-@keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(.996);} to { opacity:1; transform:none;} }
-
-/* ============================================
-   LADO ESQUERDO - BRANDING (Oculto em pequenas telas)
-   ============================================ */
-/* Painel esquerdo com logo e título (display: none por padrão).
-   Em desktops, mostra branding da marca. */
-.login-left {
-    display: none;
+button:focus {
+	outline: none;
 }
 
-.login-branding {
-    text-align: center;
+button.ghost {
+	background-color: #ffffff;
+	
+	color: #0047b3;
 }
 
-.login-logo {
-    width: 120px;
-    height: 120px;
-    margin-bottom: 30px;
-    filter: brightness(0) invert(1);
+form {
+	background-color: #FFFFFF;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	padding: 0 50px;
+	height: 100%;
+	text-align: center;
 }
 
-.login-branding h1 {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
-    letter-spacing: -0.5px;
-    padding-bottom: 8px;
-    padding-top: 6px;
-}
-.login-branding p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    font-weight: 300;
-    line-height: 1.6;
-}
-
-/* ============================================
-   LADO DIREITO - FORMULÁRIO
-   ============================================ */
-/* Painel direito com formulário, logo pequeno, título, campos e botões.
-   flex: 1 ocupa todo o espaço disponível. */
-.login-right {
-    flex: 1;
-    width: 100%;
-    padding: 28px 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    color: #333;
-    height: 100%;
-    border-radius: 20px;
-}
-
-.login-box {
-    width: 100%;
-    max-width: 360px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-}
-
-
-.login-box-logo {
-    width: 50px;
-    height: 50px;
-    margin-bottom: 12px;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.04));
-    border-radius: 6px;
-}
-
-.login-box h2 {
-    font-size: 1.8rem;
-    color: #333;
-    margin-bottom: 8px;
-    font-weight: 600;
-    text-align: center;
-}
-
-.login-subtitle {
-    color: #999;
-    font-size: 0.95rem;
-    margin-bottom: 30px;
-    font-weight: 400;
-    text-align: center;
-}
-
-/* Dica de credenciais admin */
-.admin-hint {
-    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-    border-left: 4px solid #7c3aed;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    color: #333;
-    line-height: 1.6;
-}
-
-.admin-hint strong {
-    color: #7c3aed;
-    display: block;
-    margin-bottom: 4px;
-}
-
-/* ============================================
-   FORMULÁRIO (Estrutura)
-   ============================================ */
-/* Flex column com gap cria espaçamento entre campos.
-   Cada .form-group contém label + input + mensagem de erro. */
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.form-group label {
-    font-weight: 500;
-    color: #555;
-    font-size: 0.95rem;
-}
-
-.form-group input {
-    padding: 12px 16px;
-    border: 1px solid #e6e6e6;
+input {
+	background-color: #eee;
+	border: none;
+	padding: 12.5px 15px;
+	margin: 10px 0;
+	width: 100%;
     border-radius: 10px;
-    font-size: 0.95rem;
-    transition: box-shadow 180ms ease, border-color 180ms ease;
-    background: white;
-    color: #333;
-    box-shadow: var(--shadow-soft) inset;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 6px 22px rgba(13,110,253,0.08), 0 0 0 4px rgba(13,110,253,0.06);
-}
-
-.form-group input::placeholder {
-    color: #bbb;
-}
-
-/* Wrapper para mostrar/esconder senha */
-.password-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.password-wrapper input {
-    width: 100%;
-}
-
-.toggle-password {
-    position: absolute;
-    right: 12px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 8px;
-    transition: all 0.3s ease;
-}
-
-.toggle-password:hover {
-    transform: scale(1.1);
-}
-
-.error-message {
-    color: #ff6b6b;
-    font-size: 0.85rem;
-    display: none;
-}
-
-.error-message.show {
-    display: block;
-}
-
-/* ============================================
-   OPÇÕES DO FORMULÁRIO
-   ============================================ */
-.form-options {
-    display: flex;
-    justify-content: space-between;
-   
-    align-items: center;
     font-size: 0.9rem;
 }
-
-.remember-me {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+input:focus {
+	outline: none;
+	box-shadow: 0 0 5px #0d6efd;
+	transition: box-shadow 0.3s ease-in-out;
 }
 
-.remember-me input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: var(--accent);
+/* --- CONTAINER PRINCIPAL --- */
+.container {
+	background-color: #fff;
+	border-radius: 20px;
+  	box-shadow: 0 14px 28px rgba(0,0,0,0.25), 
+			0 10px 10px rgba(0,0,0,0.22);
+	position: relative;
+	overflow: hidden;
+	width: 100%;
+	max-width: 800px;
+	min-height: 520px;
 }
 
-.remember-me label {
-    cursor: pointer;
-    color: #666;
-    margin: 0;
+.form-container {
+	position: absolute;
+	top: 0;
+	height: 100%;
+	transition: all 0.6s ease-in-out;
 }
 
-.forgot-password {
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.18s ease;
+.sign-in-container {
+	left: 0;
+	width: 50%;
+	z-index: 2;
 }
 
-.forgot-password:hover {
-    color: #0047b3;
-    text-decoration: underline;
+.container.right-panel-active .sign-in-container {
+	transform: translateX(100%);
 }
 
-/* ============================================
-   BOTÃO LOGIN (Primário)
-   ============================================ */
-/* Botão azul gradient, sem hover transform (evita layout shift).
-   Hover aumenta sombra apenas. Focado tem outline visível. */
-.btn-login {
-    padding: 12px 22px;
-    background: linear-gradient(180deg, var(--accent), #0056d6);
+.sign-up-container {
+	left: 0;
+	width: 50%;
+	opacity: 0;
+	z-index: 1;
+}
+
+.container.right-panel-active .sign-up-container {
+	transform: translateX(100%);
+	opacity: 1;
+	z-index: 5;
+	animation: show 0.6s;
+}
+
+@keyframes show {
+	0%, 49.99% {
+		opacity: 0;
+		z-index: 1;
+	}
+	
+	50%, 100% {
+		opacity: 1;
+		z-index: 5;
+	}
+}
+
+/* --- OVERLAY AZUL SLIDING --- */
+.overlay-container {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 50%;
+	height: 100%;
+	overflow: hidden;
+	transition: transform 0.6s ease-in-out;
+	z-index: 100;
+}
+
+.container.right-panel-active .overlay-container{
+	transform: translateX(-100%);
+}
+
+.overlay {
+	background: #0d6efd;
+	background: linear-gradient(to right, #0047b3, #0d6efd);
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: 0 0;
+	color: #FFFFFF;
+	position: relative;
+	left: -100%;
+	height: 100%;
+	width: 200%;
+  	transform: translateX(0);
+	transition: transform 0.6s ease-in-out;
+}
+
+.container.right-panel-active .overlay {
+  	transform: translateX(50%);
+}
+
+.overlay-panel {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	padding: 0 40px;
+	text-align: center;
+	top: 0;
+	height: 100%;
+	width: 50%;
+	transform: translateX(0);
+	transition: transform 0.6s ease-in-out;
+}
+
+.overlay-left {
+	transform: translateX(-20%);
+}
+
+.container.right-panel-active .overlay-left {
+	transform: translateX(0);
+}
+
+.overlay-right {
+	right: 0;
+	transform: translateX(0);
+}
+
+.container.right-panel-active .overlay-right {
+	transform: translateX(20%);
+}
+
+/* --- TOAST / NOTIFICAÇÃO --- */
+.toast {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: #333;
     color: #fff;
-    border: none;
-    border-radius: 28px;
-    font-size: 0.98rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: box-shadow 180ms ease, transform 120ms ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-    box-shadow: 0 8px 26px rgba(13,110,253,0.12);
-}
-
-.btn-login:hover { box-shadow: 0 12px 36px rgba(13,110,253,0.14); transform: translateY(-2px); }
-.btn-login:active { transform: translateY(0); }
-.btn-login:focus { outline: none; box-shadow: 0 12px 36px rgba(13,110,253,0.16); }
-
-/* ============================================
-   DIVISOR ("OU")
-   ============================================ */
-/* Linha com texto "Ou" no meio. Cria separação visual entre login padrão e social. */
-.divider {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin: 20px 0;
-    color: #ccc;
-    font-size: 0.9rem;
-}
-
-.divider::before,
-.divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: rgba(13,110,253,0.06);
-}
-
-/* ============================================
-   LOGIN SOCIAL (Google)
-   ============================================ */
-/* Botões para login com redes sociais (Google, Facebook).
-   Bordas suaves, fundo branco, hover aumenta sombra e muda cor de borda. */
-.social-login {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-    justify-content: center;
-}
-
-.btn-social {
-    flex: none;
-    min-width: 180px;
-    padding: 10px 18px;
-    border: 1px solid #e6e6e6;
-    background: white;
-    border-radius: 22px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: box-shadow 160ms ease, border-color 160ms ease;
-    font-size: 0.95rem;
-    color: #333;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
-}
-
-.btn-social:hover {
-    border-color: var(--accent);
-    background: #f5f8ff;
-    box-shadow: 0 6px 18px rgba(13,110,253,0.08);
-}
-
-.btn-google {
-    border-color: #ddd;
-    color: #333;
-}
-
-.btn-google:hover {
-    background: #f5f8ff;
-    border-color: var(--accent);
-}
-
-.btn-google svg.icon-google {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-    flex: none;
-}
-
-.btn-facebook {
-    border-color: #1877f2;
-    color: #1877f2;
-}
-
-.btn-facebook:hover {
-    background: #f0f2ff;
-    border-color: #1877f2;
-}
-
-/* ============================================
-   SIGNUP
-   ============================================ */
-.signup-text {
     text-align: center;
-    color: #666;
-    font-size: 0.9rem;
-    margin-top: 10px;
-    padding-bottom: 6px;
+    border-radius: 6px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    bottom: 30px;
+    font-size: 16px;
 }
 
-.signup-link {
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.18s ease;
+.toast.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
 }
 
-.signup-link:hover {
-    color: #0047b3;
-    text-decoration: underline;
-}
+@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-/* ============================================
-   RESPONSIVO
-   ============================================ */
+/* --- RESPONSIVIDADE --- */
 @media (max-width: 768px) {
-    .login-container {
-        flex-direction: column;
-        height: auto;
-        width: 100%;
-        max-width: 420px;
-        border-radius: 12px;
-        margin: 20px;
-    }
-
-    .login-left {
-        padding: 28px 18px;
-        min-height: 200px;
-    }
-
-    .login-logo {
-        width: 90px;
-        height: 90px;
-    }
-
-    .login-branding h1 {
-        font-size: 1.9rem;
-    }
-
-    .login-right {
-        padding: 28px 20px;
-    }
-
-    .login-box {
-        max-width: 320px;
-    }
-
-    .login-box-logo {
-        width: 56px;
-        height: 56px;
-    }
-
-    .login-box h2 {
-        font-size: 1.4rem;
-    }
-
-    .social-login {
-        gap: 10px;
-    }
-
-    .btn-social {
-        min-width: 0;
-        width: 100%;
+    .container {
+        width: 90%;
+        min-height: 600px;
     }
 }
 
-@media (max-width: 480px) {
-    .login-container {
-        height: auto;
-        width: 100%;
-        max-width: 360px;
-        margin: 12px;
-    }
+.form-logo {
+    width: 100px;  
+    height: auto;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
 
-    .login-left {
-        padding: 20px 12px;
-        min-height: 160px;
-    }
-
-    .login-branding h1 {
-        font-size: 1.4rem;
-    }
-
-    .login-branding p {
-        font-size: 0.95rem;
-    }
-
-    .login-right {
-        padding: 18px 12px;
-    }
-
-    .login-box h2 {
-        font-size: 1.2rem;
-    }
-
-    .form-options {
-        flex-direction: column;
-        gap: 8px;
-        align-items: flex-start;
-    }
-
-    .social-login {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .btn-social {
-        width: 100%;
-        min-width: 0;
-    }
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 50px;
+    height: 100%;
+    text-align: center;
+	gap: 6px;
 }

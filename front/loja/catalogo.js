@@ -6,6 +6,11 @@
 const API_URL = "http://localhost:3000/api";
 let books = [];
 let allBooks = []; // Para armazenar livros + mangás combinados
+let filteredBooks = [];
+
+// PAGINAÇÃO
+let currentPage = 1;
+const itemsPerPage = 12; // 12 livros por página
 
 // ============================================
 // 🛒 GERENCIADOR DE CARRINHO (Classe)
@@ -87,7 +92,7 @@ const cartCount = document.getElementById("cartCount");
 const cartTotal = document.getElementById("cartTotal");
 const checkoutBtn = document.getElementById("checkoutBtn");
 
-let filteredBooks = [...books];
+// Outras variáveis de estado
 let currentDetailBookId = null;
 
 // ============================================
@@ -325,36 +330,125 @@ function getValidImageUrl(book) {
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCBmaWxsPSIjZGRkIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Q2FwYSBuw6NvIGRpc3BvbsOtdmVsPC90ZXh0Pjwvc3ZnPg==';
 }
 
-function renderBooks(booksToRender = books) {
-    booksGrid.innerHTML = booksToRender.map(book => {
+function renderBooks(booksToRender = filteredBooks) {
+    if (!booksGrid) return;
+    
+    // Cálculo da fatia (slice) para a página atual
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedItems = booksToRender.slice(startIndex, endIndex);
+
+    if (paginatedItems.length === 0) {
+        booksGrid.innerHTML = '<div class="no-results">Nenhum livro encontrado para esta página.</div>';
+        updatePaginationControls(0);
+        return;
+    }
+
+    booksGrid.innerHTML = paginatedItems.map(book => {
         const imageUrl = getValidImageUrl(book);
-        let priceHtml = `<div class="book-price">R$ ${book.price.toFixed(2)}</div>`;
+        let priceHtml = `<div class="book-price">R$ ${Number(book.price).toFixed(2)}</div>`;
 
         if (book.onPromotion) {
             priceHtml = `
                 <div class="book-price">
-                    <span class="original-price">R$ ${book.originalPrice.toFixed(2)}</span>
-                    <span class="discounted-price">R$ ${book.price.toFixed(2)}</span>
+                    <span class="original-price">R$ ${Number(book.originalPrice).toFixed(2)}</span>
+                    <span class="discounted-price">R$ ${Number(book.price).toFixed(2)}</span>
                 </div>
             `;
         }
 
         return `
-        <div class="book-card">
-            <img src="${imageUrl}" alt="${book.title}" class="book-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCBmaWxsPSIjY2NjIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJybzwvdGV4dD48L3N2Zz4=';">
+        <div class="book-card" data-category="${book.tipo || 'livro'}">
+            <img src="${imageUrl}" alt="${book.title}" class="book-cover" onerror="this.src='/fotos/default-book.png';">
             <div class="book-info">
                 <h3 class="book-title">${book.title}</h3>
                 <p class="book-author">por ${book.author}</p>
                 ${priceHtml}
                 <div class="book-actions">
-                        <button class="view-btn" onclick="showDetail('${book.id}')">Detalhes</button>
-
+                    <button class="view-btn" onclick="showDetail('${book.id}')">Detalhes</button>
                     <button class="add-btn" onclick="addToCart('${book.id}')">Comprar</button>
                 </div>
             </div>
         </div>
         `;
     }).join('');
+
+    // Atualiza os botões de página lá embaixo
+    updatePaginationControls(booksToRender.length);
+}
+
+// FUNÇÃO PARA CRIAR OS BOTÕES DE PÁGINA
+function updatePaginationControls(totalItems) {
+    const paginationContainer = document.getElementById('pagination');
+    if (!paginationContainer) return;
+
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    
+    if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    paginationContainer.innerHTML = `
+        <button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(-1)">
+            Anterior
+        </button>
+        <span class="page-info">Página ${currentPage} de ${totalPages}</span>
+        <button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(1)">
+            Próxima
+        </button>
+    `;
+}
+
+// FUNÇÃO PARA MUDAR DE PÁGINA
+function changePage(step) {
+    currentPage += step;
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Sobe o topo para a pessoa ver os livros novos
+    renderBooks(filteredBooks);
+}
+
+// Função para buscar na API
+async function searchBooksFromAPI(searchTerm) {
+    try {
+        console.log("🔍 Buscando na API:", searchTerm);
+        
+        // Feedback visual de carregamento
+        if (booksGrid) booksGrid.innerHTML = '<div class="loading-spinner">Buscando os melhores títulos para você...</div>';
+        
+        const resultados = await searchCombined(searchTerm);
+
+        if (resultados && resultados.length > 0) {
+            const promotions = await loadPromotions();
+            // IMPORTANTE: Atualizar 'books' para que o filtro local funcione posteriormente
+            books = applyPromotionsToBooks(resultados, promotions);
+            filteredBooks = [...books];
+            
+            currentPage = 1;
+            renderBooks(filteredBooks);
+        } else {
+            books = [];
+            filteredBooks = [];
+            renderBooks([]);
+            showNotification("Nenhum item relevante encontrado.", "warning");
+        }
+    } catch (error) {
+        console.error("Erro na busca:", error);
+        showNotification("Erro ao buscar dados das APIs", "error");
+        if (booksGrid) booksGrid.innerHTML = '<div class="no-results">Erro ao carregar resultados.</div>';
+    }
+}
+
+// Evento do Teclado: Busca ao apertar Enter
+if (searchInput) {
+    searchInput.addEventListener("keypress", async (e) => {
+        if (e.key === "Enter") {
+            const term = searchInput.value.trim();
+            if (!term) return; 
+            
+            showNotification("Pesquisando...", "info");
+            await searchBooksFromAPI(term);
+        }
+    });
 }
 
 // ============================================
@@ -371,6 +465,7 @@ function filterBooks() {
         return matchesTerm && matchesCategory;
     });
 
+    currentPage = 1; // Volta para a página 1 ao filtrar
     sortBooks();
     renderBooks(filteredBooks);
 }
@@ -394,44 +489,7 @@ function sortBooks() {
 }
 
 // ============================================
-// 🌍 BUSCA GLOBAL NA API (Ao apertar ENTER)
-// ============================================
-if (searchInput) {
-    searchInput.addEventListener("keypress", async (e) => {
-        if (e.key === "Enter") {
-            const term = searchInput.value.trim();
-            if (!term) return; // Impede busca vazia
-            
-            showNotification("Pesquisando", "info");
-            
-            // Busca os dados da API com o termo exato
-            const resultados = await searchCombined(term);
-            
-            if (resultados && resultados.length > 0) {
-                // Remove itens duplicados do resultado
-                let novosLivros = [];
-                let seen = new Set();
-                for (const book of resultados) {
-                    const uniqueId = book.title ? book.title.toLowerCase() : book.id;
-                    if (!seen.has(uniqueId)) {
-                        seen.add(uniqueId);
-                        novosLivros.push(book);
-                    }
-                }
-                
-                // Aplica promoções usando a nova lista como nova base da loja
-                const promotions = await loadPromotions();
-                books = applyPromotionsToBooks(novosLivros, promotions);
-                
-                filterBooks(); // atualiza a tela aplicando os filtros visuais novamente
-                showNotification(`Encontrados ${novosLivros.length} resultados!`, "success");
-            } else {
-                showNotification("Nenhum item foi encontrado para essa pesquisa.", "warning");
-            }
-        }
-    });
-}
-
+// 🎯 ELEMENTOS DO DOM (Fim das Buscas)
 // ============================================
 // 🛍️ CARRINHO (Funções)
 // ============================================
@@ -709,64 +767,74 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function loadInitialData() {
         try {
-            // Buscando os livros (Google Books aguenta requisições paralelas)
-            const googleQueries = [
-                loadBooksFromGoogle('intitle:"Harry Potter"'),
-                loadBooksFromGoogle('intitle:"Percy Jackson"'),
-                loadBooksFromGoogle('intitle:"Marvel"'),
-                loadBooksFromGoogle('intitle:"Senhor dos Anéis"'),
-                loadBooksFromGoogle('intitle:"Duna"'),
-                loadBooksFromGoogle('intitle:"The Witcher"'),
-                loadBooksFromGoogle('intitle:"DC Comics"')
-            ];
+            const h1Title = document.querySelector('.books-section h1');
+            if (h1Title) h1Title.textContent = "Catálogo";
 
-            let results = await Promise.all(googleQueries);
+            // 1. Inicia busca paralela: Famosos (Ext) + Banco Local
+            console.log("🔥 Sincronizando catálogo completo...");
+            const [extRes, localRes] = await Promise.all([
+                fetch(`${API_URL}/externo/mais-vendidos`),
+                fetch(`${API_URL}/livros`)
+            ]);
 
-            // Jikan (Mangás) tem limite estrito de 3 requisições por segundo
-            // Buscar mangas sequencialmente com um pequeno intervalo evita as capas "que não pedi" vindo do Fallback de Erro
-            const mangasParaBuscar = [
-                'One Piece', 'Naruto', 'Demon Slayer', 'Attack on Titan', 
-                'My Hero Academia', 'Jujutsu Kaisen', 'Black Clover', 
-                'Hunter x Hunter', 'Dragon Ball', 'One Punch Man',
-            ];
-
-            for (const manga of mangasParaBuscar) {
-                const res = await loadMangasFromJikan(manga);
-                results.push(res);
-                // Espera 350 milisegundos entre cada manga para o Jikan não nos bloquear
-                await new Promise(resolve => setTimeout(resolve, 350));
-            }
+            const extData = await extRes.json();
+            const localData = await localRes.json();
             
-            // Juntando todo o universo geek
             let combinados = [];
-            let seen = new Set();
-            for (const item of results) {
-                if (item && Array.isArray(item)) {
-                    for (const book of item) {
-                        const uniqueId = book.title ? book.title.toLowerCase() : book.id;
-                        if (!seen.has(uniqueId)) {
-                            seen.add(uniqueId);
-                            combinados.push(book);
-                        }
-                    }
-                }
+            let titulosVistos = new Set();
+
+            // Adicionar do banco local primeiro
+            if (localData.success && localData.data) {
+                localData.data.forEach(item => {
+                    const titleKey = item.titulo.toLowerCase().trim();
+                    titulosVistos.add(titleKey);
+                    combinados.push({
+                        id: item.id,
+                        title: item.titulo,
+                        author: item.autor,
+                        description: item.descricao,
+                        image: item.capa_url,
+                        price: item.preco,
+                        tipo: item.categoria
+                    });
+                });
             }
+
+            // Adicionar famosos externos (evitando duplicatas pelo título)
+            if (extData.success && extData.data) {
+                extData.data.forEach(item => {
+                    const titleKey = item.title.toLowerCase().trim();
+                    if (!titulosVistos.has(titleKey)) {
+                        titulosVistos.add(titleKey);
+                        combinados.push(item);
+                    }
+                });
+            }
+
+            // 3. FILTRAGEM DE SEGURANÇA
+            const blacklistedKeywords = ['naked', 'nude', 'sexy', 'pervert', 'ecchi', 'xxx', 'hentai', 'erotica'];
+            combinados = combinados.filter(item => {
+                const text = `${item.title} ${item.author} ${item.description || ''}`.toLowerCase();
+                return !blacklistedKeywords.some(kw => text.includes(kw));
+            });
 
             if (combinados.length === 0) {
-                showNotification("Não foi possível carregar os itens iniciais", "warning");
+                showNotification("Nenhum item disponível no momento.", "warning");
                 return;
             }
 
-            // Embaralhar tudo para a loja não ficar chata e separada por fileiras
+            // Embaralha para que os famosos e os do banco se misturem e apareçam logo de cara
             combinados = combinados.sort(() => Math.random() - 0.5);
 
-            // Recortar para exibir o limite exato de aproximadamente 8 fileiras (40 itens)
-            combinados = combinados.slice(0, 40);
-
-            // Carregar promoções e aplicar aos livros
-            const promotions = await loadPromotions();
-            books = applyPromotionsToBooks(combinados, promotions);
+            // Limita a 80 itens para a página inicial (mais populado)
+            books = combinados.slice(0, 80);
             filteredBooks = [...books];
+            
+            // Carregar promoções e aplicar
+            const promotions = await loadPromotions();
+            books = applyPromotionsToBooks(books, promotions);
+            filteredBooks = [...books];
+            
             renderBooks(books);
             updateCartUI();
         } catch (error) {

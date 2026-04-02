@@ -22,13 +22,17 @@
                     <ul class="nav-links">
                         <li><a href="/inicial/i.html" class="nav-link">Início</a></li>
                         <li><a href="/loja/catalogo.html" class="nav-link">Loja</a></li>
-                        <li><a href="/biblioteca" class="nav-link">Biblioteca</a></li>
+                        <li><a href="/biblioteca/bibliotecaindex.html" class="nav-link">Biblioteca</a></li>
+                        <li><a href="/perfil/perfil.html" class="nav-link">Perfil</a></li>
                     </ul>
                 </div>
                 <div class="nav-right">
                     <button class="cart-btn" id="cartBtn">
                         Carrinho (<span id="cartCount">0</span>)
                     </button>
+                </div>
+                <div class="nav-right">
+                    <button id="logoutBtn" class="logout-btn">Sair</button>
                 </div>
             </div>
         </nav>
@@ -74,6 +78,7 @@
             <div class="books-grid" id="booksGrid">
                 <!-- Cards serão inseridos aqui dinamicamente -->
             </div>
+            <div id="pagination" class="pagination-container"></div>
         </div>
     </section>
 
@@ -154,6 +159,7 @@
     </section>
 
     <!-- Script principal com toda a lógica do catálogo -->
+    <script src="/loja/navbar-auth.js"></script>
     <script src="/loja/catalogo.js"></script>
 </body>
 </html>

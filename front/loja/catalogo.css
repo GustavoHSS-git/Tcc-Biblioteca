@@ -253,20 +253,17 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-.book-image {
+.book-cover {
     width: 100%;
-    height: auto;
-    object-fit: contain;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 350px;
+    object-fit: cover;
+    background: #fdfdfd;
     image-rendering: auto;
-    -webkit-transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
     transition: transform 0.3s ease;
     display: block;
 }
 
-.book-card:hover .book-image {
+.book-card:hover .book-cover {
     transform: scale(1.05);
 }
 
@@ -1005,3 +1002,80 @@ body {
     box-shadow: 0 6px 12px rgba(0, 115, 133, 0.3);
 }
 
+/* =======================================================
+   🎮 PAGINAÇÃO (NOVO)
+   ======================================================= */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 40px;
+    margin-bottom: 60px;
+    padding: 20px;
+    width: 100%;
+}
+
+.page-btn {
+    padding: 10px 25px;
+    background: #007385; /* Cor principal da loja */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    min-width: 120px;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #008da3;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 115, 133, 0.4);
+}
+
+.page-btn:disabled {
+    background: #333;
+    color: #777;
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: none;
+}
+
+.page-info {
+    font-size: 1.1rem;
+    color: #fff;
+    font-weight: 500;
+    min-width: 100px;
+    text-align: center;
+}
+
+
+/* ============================================
+   ESTILOS DE BUSCA E FEEDBACK
+   ============================================ */
+.loading-spinner {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    animation: pulse 1.5s infinite;
+}
+
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}

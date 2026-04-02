@@ -50,21 +50,25 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #f9f9f9;
+    background: #ffffff; /* Fundo branco limpo */
     border-radius: 12px;
-    padding: 18px;
+    padding: 10px; /* Reduzi o padding para a imagem respirar */
     width: 100%;
-    max-width: 420px;
-    aspect-ratio: 3/4;
-    border: 1px solid #efefef;
+    min-height: 480px; /* Garante um tamanho base harmonioso */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* Sombra suave para parecer premium */
     margin: 0 auto;
 }
 
 .book-cover img {
     max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border-radius: 8px;
+    max-height: 520px; /* Limite de altura maior */
+    object-fit: contain; /* Não deixa "flat" (não esmaga) */
+    border-radius: 6px;
+    transition: transform 0.3s ease;
+}
+
+.book-cover img:hover {
+    transform: scale(1.02); /* Pequeno efeito de zoom ao passar o mouse */
 }
 
 /* ==================== MIDDLE COLUMN: BOOK INFO ==================== */
@@ -310,10 +314,10 @@ body {
 }
 
 .related-books-grid {
-    display: grid;
-    /* Aumentando para 4 ou 5 colunas, os cards diminuem de tamanho */
-    grid-template-columns: repeat(5, 1fr); 
-    gap: 20px; /* Reduzi um pouco o gap para caber melhor */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-top: 20px;
 }
 
 .related-book-card {
@@ -323,6 +327,9 @@ body {
     border: 1px solid #efefef;
     transition: all 0.3s ease;
     cursor: pointer;
+    width: 100%;
+    max-width: 260px; /* TAMANHO FIXO MÁXIMO (Igual ao da loja) */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .related-book-card:hover {
@@ -375,13 +382,18 @@ body {
     }
 
     .book-title {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
+
+    .related-books-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 
     .related-books-grid {
         grid-template-columns: repeat(3, 1fr);
     }
-}
+
 
 @media (max-width: 1024px) {
     .book-details-page {
