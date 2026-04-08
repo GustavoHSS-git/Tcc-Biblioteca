@@ -19,7 +19,10 @@
                 <span>Preencha seus dados para cadastro</span>
                 <input type="text" id="regNome" placeholder="Nome Completo" required />
                 <input type="email" id="regEmail" placeholder="Email" required />
-                <input type="password" id="regPassword" placeholder="Senha (mínimo 6 caracteres)" required />
+                <div class="password-container">
+                    <input type="password" id="regPassword" placeholder="Senha (mínimo 6 caracteres)" required />
+                    <button type="button" class="toggle-password" data-target="regPassword">👁️</button>
+                </div>
                 <button type="submit" class="btn-primary">Cadastrar</button>
             </form>
         </div>
@@ -33,7 +36,10 @@
         <span>Entre com seu email e senha</span>
         
         <input type="email" id="email" placeholder="Email" required />
-        <input type="password" id="password" placeholder="Senha" required />
+        <div class="password-container">
+            <input type="password" id="password" placeholder="Senha" required />
+            <button type="button" class="toggle-password" data-target="password">👁️</button>
+        </div>
         
         <button type="submit" class="btn-primary">Entrar</button>
         <a href="#" class="forgot">Esqueceu sua senha?</a>

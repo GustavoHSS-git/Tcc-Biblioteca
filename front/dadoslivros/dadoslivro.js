@@ -28,9 +28,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadBookDetails(id) {
         let book = null;
 
-        // TENTA 1: Banco de Dados Local
+        // TENTA 1: Banco de Dados Local sempre, pois IDs UUID podem ser de livros no Supabase.
         try {
-            console.log("🔍 [1/3] Buscando no banco local...");
+            console.log("🔍 [1/3] Buscando no banco local pelo ID:", id);
             const res = await fetch(`${API_URL}/livros/${id}`);
             if (res.ok) {
                 const json = await res.json();
@@ -38,13 +38,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log("✅ Encontrado no banco local!");
                     book = normalizeBookData(json.data);
                 }
+            } else {
+                console.log("❌ Banco local não encontrou o livro (status", res.status + ")");
             }
-        } catch (e) { console.log("❌ Não encontrado no banco local."); }
+        } catch (e) {
+            console.log("❌ Erro ao buscar no banco local:", e);
+        }
 
-        // TENTA 2: APIs Externas (se não achou no banco ou se o ID parece ser de API externa)
+        // TENTA 2: Google Books por volume ID
         if (!book) {
             try {
-                // 2.1 Tentativa Google Books pelo Volume ID direto
                 console.log("🔍 [2/3] Buscando no Google Books pelo ID:", id);
                 const gRes = await fetch(`${API_URL}/externo/livro/${id}`);
                 if (gRes.ok) {
@@ -53,24 +56,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                         console.log("✅ Encontrado no Google Books!");
                         book = normalizeBookData(gJson.data);
                     }
-                }
-
-                // 2.2 Se ainda nada e o ID for número, tenta Jikan
-                if (!book && !isNaN(id)) {
-                    console.log("🔍 [3/3] Buscando no Jikan (Mangá) pelo ID:", id);
-                    const mRes = await fetch(`${API_URL}/externo/manga/${id}`);
-                    if (mRes.ok) {
-                        const mJson = await mRes.json();
-                        if (mJson.success && mJson.data) {
-                            console.log("✅ Encontrado no Jikan!");
-                            book = normalizeBookData(mJson.data);
-                        }
-                    } else {
-                        console.log("❌ Jikan retornou erro", mRes.status);
-                    }
+                } else {
+                    console.log("❌ Google Books não encontrou o livro (status", gRes.status + ")");
                 }
             } catch (e) {
-                console.error("❌ Erro técnico na busca direta por ID:", e);
+                console.log("❌ Erro ao buscar no Google Books:", e);
+            }
+        }
+
+        // TENTA 3: Jikan para IDs numéricos (mangás)
+        if (!book && !isNaN(id)) {
+            try {
+                console.log("🔍 [3/3] Buscando no Jikan (Mangá) pelo ID:", id);
+                const mRes = await fetch(`${API_URL}/externo/manga/${id}`);
+                if (mRes.ok) {
+                    const mJson = await mRes.json();
+                    if (mJson.success && mJson.data) {
+                        console.log("✅ Encontrado no Jikan!");
+                        book = normalizeBookData(mJson.data);
+                    }
+                } else {
+                    console.log("❌ Jikan retornou erro", mRes.status);
+                }
+            } catch (e) {
+                console.error("❌ Erro técnico na busca no Jikan:", e);
             }
         }
 
@@ -274,3 +283,152 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(() => notification.remove(), 3000);
     }
 });
+
+
+/**
+     * Configura o botão de adicionar à lista de desejos
+     */
+    async function setupWishlistButton(book, userId) {
+        const bookId = book.id;
+        const wishlistBtn = document.getElementById('wishlistBtn');
+        
+        if (!wishlistBtn) return;
+        
+        // Se não estiver autenticado, desabilitar botão
+        if (!userId) {
+            wishlistBtn.disabled = true;
+            wishlistBtn.style.opacity = '0.5';
+            wishlistBtn.style.cursor = 'not-allowed';
+            wishlistBtn.addEventListener('click', () => {
+                showNotification('Faça login para adicionar à lista de desejos', 'warning');
+            });
+            return;
+        }
+
+        // Verificar se o livro já está na lista de desejos
+        await checkIfInWishlist(userId, bookId, wishlistBtn);
+
+        // Adicionar listener ao botão
+        wishlistBtn.addEventListener('click', async () => {
+            // Verificar se já está ativo
+            if (wishlistBtn.classList.contains('active')) {
+                // Remover da lista
+                await removeFromWishlist(userId, bookId, wishlistBtn);
+            } else {
+                // Adicionar à lista
+                await addToWishlist(userId, book, wishlistBtn);
+            }
+        });
+    }
+
+    /**
+     * Verifica se o livro está na lista de desejos
+     */
+    async function checkIfInWishlist(userId, bookId, btn) {
+        try {
+            const response = await fetch(`${API_URL}/desejos/${userId}`);
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                // Verificar se o livro está na lista
+                const exists = result.data.some(item => 
+                    (item.livro_id === bookId || item.livro_id == bookId)
+                );
+
+                if (exists) {
+                    btn.classList.add('active');
+                    btn.textContent = '❤️ Na Lista de Desejos';
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao verificar wishlist:', error);
+        }
+    }
+
+    /**
+     * Adiciona o livro à lista de desejos
+     */
+    async function addToWishlist(userId, book, btn) {
+        const bookId = book.id;
+        try {
+            // Prepara os dados para persistência caso não existam no banco
+            const bookData = {
+                id: book.id,
+                titulo: book.title || book.titulo,
+                autor: book.author || book.autor,
+                descricao: book.description || book.descricao || 'Sem descrição',
+                capa_url: book.image || book.capa_url,
+                preco: book.price || book.preco || 39.90,
+                categoria: book.category || book.categoria || 'livro'
+            };
+
+            const response = await fetch(`${API_URL}/desejos`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    perfil_id: userId,
+                    livro_id: bookId,
+                    book_data: bookData
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                btn.classList.add('active');
+                btn.textContent = '❤️ Na Lista de Desejos';
+                showNotification('Adicionado à lista de desejos!', 'success');
+            } else {
+                const errorMsg = result.message || 'Erro desconhecido';
+                showNotification(`Erro: ${errorMsg}`, 'error');
+                console.error('Erro ao adicionar:', result);
+            }
+        } catch (error) {
+            console.error('Erro ao adicionar à wishlist:', error);
+            showNotification('Erro ao conectar com o servidor. Servidor pode estar offline.', 'error');
+        }
+    }
+
+    /**
+     * Remove o livro da lista de desejos
+     */
+    async function removeFromWishlist(userId, bookId, btn) {
+        try {
+            // Primeiro, preciso encontrar o ID da entrada na tabela lista_de_desejos
+            const response = await fetch(`${API_URL}/desejos/${userId}`);
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const wishlistItem = result.data.find(item => 
+                    item.livro_id === bookId || item.livro_id == bookId
+                );
+
+                if (wishlistItem) {
+                    // Agora fazer delete usando o ID da entrada
+                    const deleteResponse = await fetch(`${API_URL}/desejos/${wishlistItem.id}`, {
+                        method: 'DELETE'
+                    });
+
+                    const deleteResult = await deleteResponse.json();
+
+                    if (deleteResult.success) {
+                        btn.classList.remove('active');
+                        btn.textContent = '❤️ Adicionar aos Desejos';
+                        showNotification('Removido da lista de desejos!', 'success');
+                    } else {
+                        showNotification('Erro ao remover da lista de desejos', 'error');
+                    }
+                }
+            }
+
+            console.log('userId da sessão:', sessionStorage.getItem('userId'));
+            console.log('bookId da URL:', new URLSearchParams(window.location.search).get('id'));
+
+        } catch (error) {
+            console.error('Erro ao remover da wishlist:', error);
+            showNotification('Erro ao remover da lista de desejos', 'error');
+        }
+    }
+

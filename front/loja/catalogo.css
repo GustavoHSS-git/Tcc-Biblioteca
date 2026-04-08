@@ -347,6 +347,33 @@ body {
     transform: scale(1.05);
 }
 
+.wishlist-card-btn {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wishlist-card-btn:hover {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.wishlist-card-btn.active {
+    background: #ff6b6b;
+    border-color: #ff6b6b;
+    color: white;
+}
+
 /* ============================================
    MODAIS (Carrinho e Detalhes)
    ============================================ */

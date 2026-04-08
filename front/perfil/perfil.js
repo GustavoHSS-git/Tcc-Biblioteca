@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderProfile(user) {
         const avatarUrl = user.foto_perfil || 'https://placehold.co/150x150/222222/00d2ff?text=User';
         const bio = user.bio || "Este usuário ainda não escreveu uma bio.";
-        
+
         profileContainer.innerHTML = `
             <div class="profile-header">
                 <div class="profile-avatar-container">
@@ -91,9 +91,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
             </div>
+            
+            <h3 class="section-title">Minha Lista de Desejos</h3>
+            <div id="wishlistShowcase" class="library-showcase">
+                <div class="loading-container">
+                    <div class="spinner" style="width: 30px; height: 30px;"></div>
+                </div>
+            </div>
 
             <h3 class="section-title">Minhas Avaliações</h3>
             <div id="ratingsList" class="ratings-grid">
+                <div class="loading-container">
+                    <div class="spinner" style="width: 30px; height: 30px;"></div>
+                </div>
+            </div>
+
+            <h3 class="section-title">Minha Biblioteca Pessoal</h3>
+            <div id="libraryShowcase" class="library-showcase">
                 <div class="loading-container">
                     <div class="spinner" style="width: 30px; height: 30px;"></div>
                 </div>
@@ -127,14 +141,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const newBio = document.getElementById('bioTextArea').value;
             saveBioBtn.disabled = true;
             saveBioBtn.textContent = "...";
-            
+
             try {
                 const response = await fetch(`/api/perfil/${user.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome: user.nome, bio: newBio, foto_perfil: user.foto_perfil })
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     showToast("Bio atualizada!", "#4caf50");
@@ -161,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             reader.onload = async (event) => {
                 const imgData = event.target.result;
                 document.getElementById('currentAvatar').src = imgData;
-                
+
                 // Salvar no banco (URL base64 ou mock de upload)
                 try {
                     await fetch(`/api/perfil/${user.id}`, {
@@ -184,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadUserRatings(id) {
         const ratingsList = document.getElementById('ratingsList');
         const statsCount = document.getElementById('statsCount');
-        
+
         try {
             const response = await fetch(`/api/avaliacoes/user/${id}`);
             const result = await response.json();
@@ -192,33 +206,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (result.success && result.data) {
                 const ratings = result.data;
                 statsCount.textContent = ratings.length;
-                
+
                 if (ratings.length === 0) {
                     ratingsList.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 2rem;">Você ainda não avaliou nenhum livro.</p>`;
-                    return;
-                }
+                } else {
+                    ratingsList.innerHTML = ratings.map(rating => {
+                        const livro = rating.livros || {};
+                        const capa = livro.capa_url || '/fotos/default-book.png';
+                        const score = "⭐".repeat(Math.round(rating.nota)) || "N/A";
 
-                ratingsList.innerHTML = ratings.map(rating => {
-                    const livro = rating.livros || {};
-                    const capa = livro.capa_url || '/fotos/default-book.png';
-                    const score = "⭐".repeat(Math.round(rating.nota)) || "N/A";
-                    
-                    return `
-                        <div class="rating-card">
-                            <div class="card-image-wrap">
-                                <img src="${capa}" class="card-image" alt="${livro.titulo}">
-                                <div class="card-badge">${livro.categoria || 'Livro'}</div>
+                        return `
+                            <div class="rating-card">
+                                <div class="card-image-wrap">
+                                    <img src="${capa}" class="card-image" alt="${livro.titulo}">
+                                    <div class="card-badge">${livro.categoria || 'Livro'}</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="card-title">${livro.titulo || 'Título Desconhecido'}</div>
+                                    <div class="card-score">${score} (${rating.nota})</div>
+                                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
+                                        ${rating.comentario ? `"${rating.comentario}"` : "Sem comentário."}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="card-content">
-                                <div class="card-title">${livro.titulo || 'Título Desconhecido'}</div>
-                                <div class="card-score">${score} (${rating.nota})</div>
-                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
-                                    ${rating.comentario ? `"${rating.comentario}"` : "Sem comentário."}
-                                </p>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
+                }
             }
         } catch (error) {
             ratingsList.innerHTML = `<p>Erro ao carregar avaliações.</p>`;
@@ -230,8 +243,91 @@ document.addEventListener('DOMContentLoaded', async () => {
             const wishlistData = await wishlistRes.json();
             if (wishlistData.success) {
                 document.getElementById('wishlistCount').textContent = wishlistData.data.length;
+                loadUserWishlist(id, wishlistData.data);
             }
         } catch (e) { console.warn("Wishlist count fail"); }
+
+        // Carregar biblioteca pessoal
+        loadUserLibrary(id);
+    }
+
+    /**
+     * Loads and renders the user's wishlist
+     */
+    async function loadUserWishlist(id, wishlistData) {
+        const wishlistShowcase = document.getElementById('wishlistShowcase');
+
+        if (!wishlistData || wishlistData.length === 0) {
+            wishlistShowcase.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">Sua lista de desejos está vazia. Adicione livros no catálogo!</p>`;
+            return;
+        }
+
+        wishlistShowcase.innerHTML = wishlistData.map(item => {
+            const livro = item.livros || {};
+            const capa = livro.capa_url || item.capa_url || '/fotos/default-book.png';
+            const titulo = livro.titulo || item.titulo || 'Título Desconhecido';
+            const autor = livro.autor || item.autor || 'Autor Desconhecido';
+
+            return `
+                <div class="book-card">
+                    <div class="card-image-wrap">
+                        <img src="${capa}" class="card-image" alt="${titulo}">
+                        <div class="card-badge">Desejo</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">${titulo}</div>
+                        <div class="card-author">por ${autor}</div>
+                        <button class="btn-remove-wishlist" onclick="removeFromWishlist(${item.id})">Remover</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Loads and renders the user's personal library
+     */
+    async function loadUserLibrary(id) {
+        const libraryShowcase = document.getElementById('libraryShowcase');
+
+        try {
+            const response = await fetch(`/api/biblioteca-pessoal/${id}`);
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const library = result.data;
+
+                if (library.length === 0) {
+                    libraryShowcase.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">Sua biblioteca pessoal está vazia. Compre livros na loja!</p>`;
+                    return;
+                }
+
+                libraryShowcase.innerHTML = library.map(item => {
+                    const livro = item.livros || {};
+                    const capa = livro.capa_url || '/fotos/default-book.png';
+                    const titulo = livro.titulo || 'Título Desconhecido';
+                    const autor = livro.autor || 'Autor Desconhecido';
+
+                    return `
+                        <div class="book-card">
+                            <div class="card-image-wrap">
+                                <img src="${capa}" class="card-image" alt="${titulo}">
+                                <div class="card-badge">Biblioteca</div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">${titulo}</div>
+                                <div class="card-author">por ${autor}</div>
+                                <button class="btn-read" onclick="readBook('${item.livro_id}')">Ler</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                libraryShowcase.innerHTML = `<p>Erro ao carregar biblioteca.</p>`;
+            }
+        } catch (error) {
+            libraryShowcase.innerHTML = `<p>Erro ao conectar com o servidor.</p>`;
+        }
     }
 
     /**
@@ -242,5 +338,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         toast.style.backgroundColor = color;
         toast.className = "toast show";
         setTimeout(() => { toast.classList.remove("show"); }, 3000);
+    }
+
+    /**
+     * Removes a book from the user's wishlist
+     */
+    async function removeFromWishlist(wishlistId) {
+        try {
+            const response = await fetch(`/api/desejos/${wishlistId}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (result.success) {
+                showToast("Removido da lista de desejos!", "#4caf50");
+                // Reload the profile to update the list
+                loadUserProfile(userId);
+            } else {
+                showToast("Erro ao remover.");
+            }
+        } catch (e) {
+            showToast("Erro de conexão.");
+        }
+    }
+
+    /**
+     * Opens the book for reading
+     */
+    function readBook(bookId) {
+        // Redirect to the reading page with the book ID
+        window.location.href = `/leitura/Leitura.html?bookId=${bookId}`;
     }
 });

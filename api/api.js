@@ -3,6 +3,8 @@ const router = express.Router();
 // Importar os serviços das APIs externas
 const supabase = require('../supabase');
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // ============================================
 // 📚 CRUD PARA LIVROS (Supabase)
 // ============================================
@@ -21,7 +23,7 @@ router.get('/livros', async (req, res) => {
 // POST /api/livros - Criar um novo livro
 router.post('/livros', async (req, res) => {
     const { title, author, price, image, description, category, titulo, autor, preco, capa_url, descricao, categoria } = req.body;
-    
+
     // Suporte para ambos os formatos (CamelCase do front vs snake_case do banco)
     const payload = {
         titulo: titulo || title,
@@ -31,7 +33,7 @@ router.post('/livros', async (req, res) => {
         descricao: descricao || description,
         categoria: categoria || category
     };
-    
+
     try {
         const { data, error } = await supabase.from('livros').insert([payload]).select();
         if (error) throw error;
@@ -45,7 +47,7 @@ router.post('/livros', async (req, res) => {
 router.put('/livros/:id', async (req, res) => {
     const { id } = req.params;
     const { title, author, price, image, description, category, titulo, autor, preco, capa_url, descricao, categoria } = req.body;
-    
+
     const payload = {
         titulo: titulo || title,
         autor: autor || author,
@@ -54,7 +56,7 @@ router.put('/livros/:id', async (req, res) => {
         descricao: descricao || description,
         categoria: categoria || category
     };
-    
+
     try {
         const { data, error } = await supabase.from('livros').update(payload).eq('id', id).select();
         if (error) throw error;
@@ -77,76 +79,214 @@ router.delete('/livros/:id', async (req, res) => {
 });
 
 // ============================================
-// 🎉 CRUD PARA PROMOÇÕES (Supabase)
+//  LISTA DE DESEJOS Supabase - Direto no Perfil
 // ============================================
 
-// GET /api/promocoes - Listar todas as promoções
-router.get('/promocoes', async (req, res) => {
+// GET /api/desejos/:perfil_id - Listar desejos salvos no perfil
+router.get('/desejos/:perfil_id', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('promocoes').select('*');
+        const { perfil_id } = req.params;
+        console.log(`[GET /desejos] Buscando desejos para perfil_id: ${perfil_id}`);
+
+        // Buscamos direto da tabela de desejos (agora com metadados)
+        const { data, error } = await supabase
+            .from('lista_de_desejos')
+            .select('*')
+            .eq('perfil_id', perfil_id);
+
         if (error) throw error;
-        res.json({ success: true, data });
+
+
+        const formattedData = data.map(item => {
+            // Se o join não trouxe nada (ou nem foi feito), montamo o objeto "livros" fictício
+            if (!item.livros || item.livros.length === 0) {
+                item.livros = {
+                    id: item.livro_id,
+                    titulo: item.titulo || 'Livro sem título',
+                    autor: item.autor || 'Autor desconhecido',
+                    capa_url: item.capa_url || null,
+                    preco: item.preco || 39.90
+                };
+            }
+            return item;
+        });
+
+        res.json({ success: true, data: formattedData });
     } catch (error) {
-        // Retorna vazio silenciosamente se a tabela não existir
-        res.json({ success: true, data: [] });
+        console.error('[GET /desejos] Erro:', error.message);
+        res.status(500).json({ success: false, message: "Erro ao buscar lista de desejos", error: error.message });
     }
 });
 
-// POST /api/promocoes - Criar uma nova promoção
-router.post('/promocoes', async (req, res) => {
-    const { bookId, book_id, discount_type, discountType, discount_value, discountValue, start_date, end_date } = req.body;
-    const bookIdFinal = bookId || book_id;
-    const discountTypeFinal = discount_type || discountType;
-    const discountValueFinal = discount_value || discountValue;
-    
+// POST /api/desejos - Salvar livro no perfil 
+router.post('/desejos', async (req, res) => {
+    const { perfil_id, livro_id, book_data } = req.body;
     try {
-        const { data, error } = await supabase.from('promocoes').insert([{
-            book_id: bookIdFinal,
-            discount_type: discountTypeFinal,
-            discount_value: discountValueFinal,
-            start_date,
-            end_date
-        }]).select();
-        if (error) throw error;
-        res.json({ success: true, data });
+        console.log(`[POST /desejos] Salvando no perfil - perfil_id: ${perfil_id}, livro_id: ${livro_id}`);
+
+        if (!perfil_id || !livro_id) {
+            return res.status(400).json({ success: false, message: "perfil_id e livro_id são obrigatórios" });
+        }
+
+        // SALVA DIRETO: Inserimos direto na lista de desejos usando os dados enviados pelo front
+        // Simplifiquei o payload para remover campos que podem estar causando erro de coluna inexistente
+        const payload = {
+            perfil_id: perfil_id,
+            livro_id: String(livro_id),
+            titulo: book_data?.titulo || book_data?.title || 'Livro sem título',
+            autor: book_data?.autor || book_data?.author || 'Autor desconhecido',
+            capa_url: book_data?.capa_url || book_data?.image || book_data?.image_url || null
+        };
+
+        const { data, error } = await supabase
+            .from('lista_de_desejos')
+            .insert([payload])
+            .select();
+
+        if (error) {
+            console.error('[POST /desejos] Erro do Supabase:', error.message);
+            // Se for duplicata já está na lista retornama sucesso apenas
+            if (/duplicate|unique/i.test(error.message)) {
+                return res.json({ success: true, message: "Livro já está nos desejos", data: [] });
+            }
+            throw error;
+        }
+
+        console.log('[POST /desejos] Salvo com sucesso no perfil');
+        res.json({ success: true, message: "Salvo no perfil!", data });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Erro ao criar promoção" });
+        console.error('[POST /desejos] Erro inesperado:', error.message);
+        res.status(500).json({ success: false, message: "Erro ao salvar no perfil", details: error.message });
     }
 });
 
-// PUT /api/promocoes/:id - Atualizar uma promoção
-router.put('/promocoes/:id', async (req, res) => {
+// DELETE /api/desejos/:id - Remover do perfil
+router.delete('/desejos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await supabase.from('lista_de_desejos').delete().eq('id', id);
+        if (error) throw error;
+        res.json({ success: true, message: "Item removido do perfil" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao deletar desejo", error: error.message });
+    }
+});
+
+// ============================================
+//  OUTROS ENDPOINTS (Legado)
+// ============================================
+router.get('/livros', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('livros').select('*');
+        if (error) throw error;
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao buscar livros" });
+    }
+});
+
+router.get('/livros/:id', async (req, res) => {
     const { id } = req.params;
-    const { bookId, book_id, discount_type, discountType, discount_value, discountValue, start_date, end_date, category } = req.body;
-    const bookIdFinal = bookId || book_id;
-    const discountTypeFinal = discount_type || discountType;
-    const discountValueFinal = discount_value || discountValue;
-    
     try {
-        const { data, error } = await supabase.from('promocoes').update({
-            book_id: bookIdFinal,
-            discount_type: discountTypeFinal,
-            discount_value: discountValueFinal,
-            start_date,
-            end_date,
-            category
-        }).eq('id', id).select();
+        const query = uuidPattern.test(id)
+            ? supabase.from('livros').select('*').eq('id', id).maybeSingle()
+            : supabase.from('livros').select('*').eq('id_externo', id).maybeSingle();
+        const { data, error } = await query;
         if (error) throw error;
+        if (!data) return res.status(404).json({ success: false, message: 'Livro não encontrado' });
         res.json({ success: true, data });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Erro ao atualizar promoção" });
+        res.status(500).json({ success: false, message: 'Erro ao buscar livro', details: error.message });
     }
 });
 
-// DELETE /api/promocoes/:id - Deletar uma promoção
-router.delete('/promocoes/:id', async (req, res) => {
-    const { id } = req.params;
+// ============================================
+// 💰 VENDAS (Checkout & Ranking)
+// ============================================
+
+// POST /api/vendas - Registrar venda de itens
+router.post('/vendas', async (req, res) => {
+    const { perfil_id, items } = req.body;
+
+    if (!items || !items.length) {
+        return res.status(400).json({ success: false, message: "Dados de venda incompletos" });
+    }
+
     try {
-        const { error } = await supabase.from('promocoes').delete().eq('id', id);
-        if (error) throw error;
-        res.json({ success: true, message: "Promoção deletada" });
+        let vendasData = [];
+        let bibliotecaData = [];
+
+        // Para cada item, garantir que temos um UUID válido da tabela livros
+        for (const item of items) {
+            let livroUuid = item.id || item.livro_id;
+
+            // Verifica se é UUID válido, se não for, precisamos buscar/inserir no banco 'livros'
+            if (!uuidPattern.test(livroUuid)) {
+                // Tenta achar em livros pelo id_externo ou titulo+autor
+                const { data: existingBook } = await supabase
+                    .from('livros')
+                    .select('id')
+                    .or(`id_externo.eq.${livroUuid},and(titulo.eq."${item.title}",autor.eq."${item.author}")`)
+                    .maybeSingle();
+
+                if (existingBook && existingBook.id) {
+                    livroUuid = existingBook.id;
+                } else {
+                    // Insere o livro externo no banco para ter um UUID
+                    const { data: newBook, error: insertErr } = await supabase
+                        .from('livros')
+                        .insert([{
+                            id_externo: livroUuid,
+                            titulo: item.title,
+                            autor: item.author,
+                            preco: item.price,
+                            capa_url: item.image,
+                            categoria: item.tipo || 'livro'
+                        }])
+                        .select('id')
+                        .single();
+
+                    if (newBook && newBook.id) {
+                        livroUuid = newBook.id;
+                    } else {
+                        throw new Error("Não foi possível resolver o UUID do livro exerno: " + item.title);
+                    }
+                }
+            }
+
+            vendasData.push({
+                perfil_id: perfil_id || null,
+                livro_id: livroUuid,
+                quantidade: item.quantity || 1,
+                preco_unitario: item.price,
+                total: item.price * (item.quantity || 1)
+            });
+
+            if (perfil_id) {
+                bibliotecaData.push({
+                    perfil_id: perfil_id,
+                    livro_id: livroUuid,
+                    preco: item.price
+                });
+            }
+        }
+
+        // Insere as vendas
+        const { error: vendasError } = await supabase
+            .from('vendas')
+            .insert(vendasData);
+
+        if (vendasError) throw vendasError;
+
+        // Insere na biblioteca pessoal
+        if (bibliotecaData.length > 0) {
+            await supabase.from('biblioteca_pessoal').insert(bibliotecaData);
+        }
+
+        res.json({ success: true, message: "Venda registrada com sucesso!" });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Erro ao deletar promoção" });
+        console.error('Erro ao registrar venda:', error.message || error);
+        res.status(500).json({ success: false, message: "Erro ao processar checkout" });
     }
 });
 
@@ -160,7 +300,7 @@ router.get('/perfil/:id', async (req, res) => {
             .select('*')
             .eq('id', req.params.id)
             .maybeSingle(); // Usar maybeSingle para não disparar erro se não encontrar
-        
+
         if (error) throw error;
 
         if (!data) {
@@ -186,7 +326,7 @@ router.put('/perfil/:id', async (req, res) => {
 });
 
 // ============================================
-// ⭐ AVALIAÇÕES (Supabase)
+//  AVALIAÇÕES (Supabase)
 // ============================================
 router.get('/avaliacoes/:livro_id', async (req, res) => {
     try {
@@ -216,9 +356,9 @@ router.get('/avaliacoes/user/:id', async (req, res) => {
             .from('avaliacoes')
             .select('*, livros(*)')
             .eq('perfil_id', req.params.id);
-        
+
         if (error) throw error;
-        
+
         // Formatar para incluir informações do livro no padrão esperado pelo front
         res.json({ success: true, data });
     } catch (error) {
@@ -227,7 +367,7 @@ router.get('/avaliacoes/user/:id', async (req, res) => {
 });
 
 // ============================================
-// ❤️ LISTA DE DESEJOS (Supabase)
+//  LISTA DE DESEJOS (Supabase)
 // ============================================
 router.get('/desejos/:perfil_id', async (req, res) => {
     try {
@@ -261,13 +401,31 @@ router.delete('/desejos/:id', async (req, res) => {
 });
 
 // ============================================
-// 📚 BIBLIOTECA PESSOAL (Supabase)
+//  BIBLIOTECA PESSOAL (Supabase)
 // ============================================
 router.get('/biblioteca-pessoal/:perfil_id', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('biblioteca_pessoal').select('*, livros(*)').eq('perfil_id', req.params.perfil_id);
+        const { data, error } = await supabase.from('biblioteca_pessoal').select('*, livros!biblioteca_pessoal_livro_id_fkey(*)').eq('perfil_id', req.params.perfil_id);
         if (error) throw error;
-        res.json({ success: true, data });
+
+        const formattedData = data.map(item => {
+            // fallback para exibir mesmos dados caso livros no supabase falhe (join null)
+            if (!item.livros || item.livros.length === 0) {
+                item.livros = {
+                    id: item.livro_id || item.livro_id_externo,
+                    titulo: item.titulo || 'Livro sem título',
+                    autor: item.autor || 'Autor desconhecido',
+                    capa_url: item.capa_url || null,
+                    preco: item.preco || 0
+                };
+            } else if (Array.isArray(item.livros)) {
+                // Tratar se retornar array por algum motivo do foreign key
+                item.livros = item.livros[0] || {};
+            }
+            return item;
+        });
+
+        res.json({ success: true, data: formattedData });
     } catch (error) {
         res.status(500).json({ success: false, message: "Erro ao buscar conteúdo da biblioteca pessoal" });
     }
@@ -281,39 +439,6 @@ router.post('/biblioteca-pessoal', async (req, res) => {
         res.json({ success: true, data });
     } catch (error) {
         res.status(500).json({ success: false, message: "Erro ao comprar/adicionar à biblioteca" });
-    }
-});
-
-// ============================================
-// 💰 VENDAS / CARRINHO (Supabase)
-// ============================================
-router.post('/vendas', async (req, res) => {
-    const { items, perfil_id } = req.body;
-    
-    if (!items || !items.length) {
-        return res.status(400).json({ success: false, message: "Carrinho vazio ou inválido" });
-    }
-    
-    try {
-        const insertData = items.map(item => ({
-            livro_id: item.id || item.livro_id,
-            perfil_id: perfil_id || null, // Perfil de quem comprou (pode ser null se for compra anônima por enquanto)
-            quantidade: item.quantity || 1,
-            preco_unitario: item.price,
-            total: item.price * (item.quantity || 1)
-        }));
-        
-        const { data, error } = await supabase.from('vendas').insert(insertData).select();
-        
-        if (error) {
-            console.error('Erro no Supabase ao inserir venda:', error);
-            throw error;
-        }
-        
-        res.json({ success: true, message: "Venda registrada com sucesso", data });
-    } catch (error) {
-        console.error('Erro ao registrar venda:', error.message);
-        res.status(500).json({ success: false, message: "Erro ao registrar venda no banco" });
     }
 });
 

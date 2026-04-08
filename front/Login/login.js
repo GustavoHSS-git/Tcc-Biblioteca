@@ -1,8 +1,3 @@
-/**
- * LOGIN & REGISTRATION - PREMIUM SLIDING TRANSITION
- * Manages the UI transitions and API interactions for the bookstore.
- */
-
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENTOS UI ---
     const signUpButton = document.getElementById('signUp');
@@ -99,6 +94,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showToast("Erro ao processar cadastro.", "#ff6b6b");
         }
+    });
+
+    // --- TOGGLE PASSWORD VISIBILITY ---
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const passwordInput = document.getElementById(targetId);
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                this.textContent = '👁️‍🗨️';
+            } else {
+                passwordInput.type = 'password';
+                this.textContent = '👁️';
+            }
+        });
     });
 
     // --- UTILITÁRIOS ---

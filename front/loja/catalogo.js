@@ -70,6 +70,115 @@ class Cart {
         this.updateUI();
     }
 }
+// ============================================
+// ❤️ WISHLIST (Lista de Desejos) nos Cards
+// ============================================
+let userWishlist = []; // IDs dos livros na wishlist do usuário
+
+async function loadUserWishlist() {
+    const userId = sessionStorage.getItem('userId');
+    if (!userId) return;
+    try {
+        const res = await fetch(`${API_URL}/desejos/${userId}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+            userWishlist = json.data.map(item => ({
+                wishlistId: item.id,
+                livroId: item.livro_id
+            }));
+            // Atualiza os botões que já estão renderizados
+            document.querySelectorAll('.wishlist-card-btn').forEach(btn => {
+                const bookId = btn.dataset.bookId;
+                const inList = userWishlist.some(w => w.livroId === bookId || w.livroId == bookId);
+                if (inList) {
+                    btn.classList.add('active');
+                    btn.innerHTML = '❤️';
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Erro ao carregar wishlist:', e);
+    }
+}
+
+async function toggleWishlist(bookId, btn, event) {
+    event.stopPropagation(); // Evita abrir detalhes do livro
+    event.preventDefault();
+
+    const userId = sessionStorage.getItem('userId');
+    if (!userId) {
+        showNotification('Faça login para salvar nos desejos', 'warning');
+        return;
+    }
+
+    const isActive = btn.classList.contains('active');
+
+    if (isActive) {
+        // REMOVER da wishlist
+        const entry = userWishlist.find(w => w.livroId === bookId || w.livroId == bookId);
+        if (entry) {
+            try {
+                const res = await fetch(`${API_URL}/desejos/${entry.wishlistId}`, { method: 'DELETE' });
+                const json = await res.json();
+                if (json.success) {
+                    btn.classList.remove('active');
+                    btn.innerHTML = '🤍';
+                    userWishlist = userWishlist.filter(w => w.wishlistId !== entry.wishlistId);
+                    showNotification('Removido da lista de desejos', 'info');
+                }
+            } catch (e) {
+                showNotification('Erro ao remover dos desejos', 'error');
+            }
+        }
+    } else {
+        // ADICIONAR à wishlist
+        try {
+            btn.innerHTML = '⏳';
+            console.log('[WISHLIST] Enviando:', { perfil_id: userId, livro_id: bookId, typeOfBookId: typeof bookId });
+            
+            // Busca o objeto completo do livro no catálogo
+            const book = books.find(b => b.id.toString() === bookId.toString());
+            if (!book) {
+                throw new Error('Livro não encontrado no catálogo');
+            }
+
+            // Prepara os dados do livro caso o backend precise persistir
+            const bookData = {
+                id: book.id,
+                titulo: book.title || book.titulo,
+                autor: book.author || book.autor,
+                descricao: book.description || book.descricao || 'Sem descrição',
+                capa_url: book.image || book.capa_url,
+                preco: book.price || book.preco || 39.90,
+                categoria: book.tipo || book.categoria || (book.type === 'manga' ? 'manga' : 'livro')
+            };
+
+            const res = await fetch(`${API_URL}/desejos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    perfil_id: userId, 
+                    livro_id: bookId,
+                    book_data: bookData // Enviamos os dados para facilitar a persistência
+                })
+            });
+            const json = await res.json();
+            console.log('[WISHLIST] Resposta:', json);
+            if (json.success) {
+                btn.classList.add('active');
+                btn.innerHTML = '❤️';
+                userWishlist.push({ wishlistId: json.data[0]?.id, livroId: bookId });
+                showNotification('Adicionado à lista de desejos! ❤️', 'success');
+            } else {
+                btn.innerHTML = '🤍';
+                showNotification(json.message || 'Erro ao adicionar', 'error');
+            }
+        } catch (e) {
+            btn.innerHTML = '🤍';
+            showNotification('Erro ao conectar com o servidor', 'error');
+        }
+    }
+}
 
 // ============================================
 // 🎯 ELEMENTOS DO DOM (Seletores)
@@ -240,7 +349,7 @@ async function loadPromotions() {
         return [];
     } catch (error) {
         console.error("Erro ao carregar promoções:", error);
-        return [];
+        return [ ];
     }
 }
 
@@ -365,6 +474,7 @@ function renderBooks(booksToRender = filteredBooks) {
                 <p class="book-author">por ${book.author}</p>
                 ${priceHtml}
                 <div class="book-actions">
+                    <button class="wishlist-card-btn" data-book-id="${book.id}" onclick="toggleWishlist('${book.id}', this, event)">🤍</button>
                     <button class="view-btn" onclick="showDetail('${book.id}')">Detalhes</button>
                     <button class="add-btn" onclick="addToCart('${book.id}')">Comprar</button>
                 </div>
@@ -709,7 +819,7 @@ checkoutBtn.addEventListener("click", async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 items: cart.items,
-                perfil_id: null // Se tiver lógica de login na loja, pegue do localStorage
+                perfil_id: sessionStorage.getItem('userId') || null
             })
         });
         
@@ -845,4 +955,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Carrega os dados iniciais
     await loadInitialData();
+
+    // Carregar wishlist do usuário se logado
+    if (sessionStorage.getItem('userId')) {
+        await loadUserWishlist();
+    }
 });

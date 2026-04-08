@@ -61,7 +61,7 @@ app.get('/api/animes', async (req, res) => {
 });
 
 // ============================================
-// 📖 DADOS DOS LIVROS (API)
+//  DADOS DOS LIVROS (API)
 // ============================================
 
 // Não armazenamos mais livros em memória – agora usamos Supabase para persistência.
@@ -888,12 +888,8 @@ app.post('/api/register', async (req, res) => {
         });
     }
 });
-const fs = require('fs');
-const cssPath = path.join(__dirname, 'front', 'Login', 'login.css');
-console.log('O arquivo CSS existe neste caminho?', fs.existsSync(cssPath));
-console.log('Caminho tentado:', cssPath);
 
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-    console.log(`📚 Biblioteca Digital - Página inicial: Login`);
+    console.log(`🥳 Servidor rodando em http://localhost:${PORT}`);
+    console.log(`🤠 Biblioteca Digital - Página inicial: Login`);
 });
