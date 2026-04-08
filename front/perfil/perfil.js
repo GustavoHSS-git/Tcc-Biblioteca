@@ -1,8 +1,3 @@
-/**
- * 👤 USER PROFILE MANAGEMENT
- * Handles fetching, rendering, and updating user profiles and ratings.
- */
-
 document.addEventListener('DOMContentLoaded', async () => {
     // --- SESSION CONTROL ---
     const userId = sessionStorage.getItem('userId');
@@ -27,12 +22,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/Login/Login.html';
     });
 
-    /**
-     * Loads the complete user profile including stats and bio
-     */
     async function loadUserProfile(id) {
         try {
-            const response = await fetch(`/api/perfil/${id}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+            
+            const response = await fetch(`/api/perfil/${id}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
             const result = await response.json();
 
             if (result.success) {
@@ -43,7 +42,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 profileContainer.innerHTML = `<p class="error-msg">Erro: ${result.message}</p>`;
             }
         } catch (error) {
-            profileContainer.innerHTML = `<p class="error-msg">Erro ao conectar com o servidor.</p>`;
+            if (error.name === 'AbortError') {
+                profileContainer.innerHTML = `<p class="error-msg">Timeout: Servidor não respondeu.</p>`;
+            } else {
+                profileContainer.innerHTML = `<p class="error-msg">Erro ao conectar com o servidor.</p>`;
+            }
         }
     }
 
@@ -53,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderProfile(user) {
         const avatarUrl = user.foto_perfil || 'https://placehold.co/150x150/222222/00d2ff?text=User';
         const bio = user.bio || "Este usuário ainda não escreveu uma bio.";
-
+        
         profileContainer.innerHTML = `
             <div class="profile-header">
                 <div class="profile-avatar-container">
@@ -91,8 +94,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
             </div>
-            
-            <h3 class="section-title">Minha Lista de Desejos</h3>
+
+            <h3 class="section-title">❤️ Minha Lista de Desejos</h3>
             <div id="wishlistShowcase" class="library-showcase">
                 <div class="loading-container">
                     <div class="spinner" style="width: 30px; height: 30px;"></div>
@@ -106,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
 
-            <h3 class="section-title">Minha Biblioteca Pessoal</h3>
+            <h3 class="section-title">📚 Minha Biblioteca Pessoal</h3>
             <div id="libraryShowcase" class="library-showcase">
                 <div class="loading-container">
                     <div class="spinner" style="width: 30px; height: 30px;"></div>
@@ -141,14 +144,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const newBio = document.getElementById('bioTextArea').value;
             saveBioBtn.disabled = true;
             saveBioBtn.textContent = "...";
-
+            
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
                 const response = await fetch(`/api/perfil/${user.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome: user.nome, bio: newBio, foto_perfil: user.foto_perfil })
+                    body: JSON.stringify({ nome: user.nome, bio: newBio, foto_perfil: user.foto_perfil }),
+                    signal: controller.signal
                 });
-
+                clearTimeout(timeoutId);
+                
                 const result = await response.json();
                 if (result.success) {
                     showToast("Bio atualizada!", "#4caf50");
@@ -175,14 +183,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             reader.onload = async (event) => {
                 const imgData = event.target.result;
                 document.getElementById('currentAvatar').src = imgData;
-
+                
                 // Salvar no banco (URL base64 ou mock de upload)
                 try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    
                     await fetch(`/api/perfil/${user.id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ nome: user.nome, bio: user.bio, foto_perfil: imgData })
+                        body: JSON.stringify({ nome: user.nome, bio: user.bio, foto_perfil: imgData }),
+                        signal: controller.signal
                     });
+                    clearTimeout(timeoutId);
+                    
                     showToast("Avatar atualizado!", "#4caf50");
                 } catch (err) {
                     showToast("Erro ao salvar avatar.");
@@ -192,178 +206,191 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    /**
-     * Loads the user ratings and updates the stats
-     */
     async function loadUserRatings(id) {
         const ratingsList = document.getElementById('ratingsList');
         const statsCount = document.getElementById('statsCount');
-
+        
         try {
-            const response = await fetch(`/api/avaliacoes/user/${id}`);
+            console.log('[Ratings] Iniciando...');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                console.log('[Ratings] TIMEOUT!');
+                controller.abort();
+            }, 5000);
+            
+            const response = await fetch(`/api/avaliacoes/user/${id}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
+            console.log('[Ratings] Resposta recebida');
             const result = await response.json();
+            console.log('[Ratings] Dados:', result);
 
             if (result.success && result.data) {
                 const ratings = result.data;
                 statsCount.textContent = ratings.length;
-
+                console.log('[Ratings] Total:', ratings.length);
+                
                 if (ratings.length === 0) {
-                    ratingsList.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 2rem;">Você ainda não avaliou nenhum livro.</p>`;
+                    ratingsList.innerHTML = `<p>Você ainda não avaliou nenhum livro.</p>`;
                 } else {
-                    ratingsList.innerHTML = ratings.map(rating => {
-                        const livro = rating.livros || {};
-                        const capa = livro.capa_url || '/fotos/default-book.png';
-                        const score = "⭐".repeat(Math.round(rating.nota)) || "N/A";
-
-                        return `
-                            <div class="rating-card">
-                                <div class="card-image-wrap">
-                                    <img src="${capa}" class="card-image" alt="${livro.titulo}">
-                                    <div class="card-badge">${livro.categoria || 'Livro'}</div>
-                                </div>
-                                <div class="card-content">
-                                    <div class="card-title">${livro.titulo || 'Título Desconhecido'}</div>
-                                    <div class="card-score">${score} (${rating.nota})</div>
-                                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
-                                        ${rating.comentario ? `"${rating.comentario}"` : "Sem comentário."}
-                                    </p>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+                    ratingsList.innerHTML = `<p>${ratings.length} avaliações carregadas</p>`;
                 }
             }
         } catch (error) {
-            ratingsList.innerHTML = `<p>Erro ao carregar avaliações.</p>`;
+            console.error('[Ratings] Error:', error.message);
+            ratingsList.innerHTML = `<p>Erro ao carregar avaliações: ${error.message}</p>`;
         }
 
-        // Carregar wishlist count separately if endpoint exists
+        // Carregar wishlist count e exibição
         try {
-            const wishlistRes = await fetch(`/api/desejos/${id}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            
+            const wishlistRes = await fetch(`/api/desejos/${id}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
             const wishlistData = await wishlistRes.json();
-            if (wishlistData.success) {
+            
+            if (wishlistData.success && Array.isArray(wishlistData.data)) {
                 document.getElementById('wishlistCount').textContent = wishlistData.data.length;
-                loadUserWishlist(id, wishlistData.data);
+                loadWishlist(wishlistData.data);
             }
-        } catch (e) { console.warn("Wishlist count fail"); }
+        } catch (e) { 
+            // Erro silencioso se a lista de desejos falhar
+        }
 
         // Carregar biblioteca pessoal
-        loadUserLibrary(id);
+        loadLibraryShowcase(id);
     }
 
     /**
-     * Loads and renders the user's wishlist
+     * Exibe os livros da lista de desejos
      */
-    async function loadUserWishlist(id, wishlistData) {
-        const wishlistShowcase = document.getElementById('wishlistShowcase');
-
-        if (!wishlistData || wishlistData.length === 0) {
-            wishlistShowcase.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">Sua lista de desejos está vazia. Adicione livros no catálogo!</p>`;
-            return;
-        }
-
-        wishlistShowcase.innerHTML = wishlistData.map(item => {
-            const livro = item.livros || {};
-            const capa = livro.capa_url || item.capa_url || '/fotos/default-book.png';
-            const titulo = livro.titulo || item.titulo || 'Título Desconhecido';
-            const autor = livro.autor || item.autor || 'Autor Desconhecido';
-
-            return `
-                <div class="book-card">
-                    <div class="card-image-wrap">
-                        <img src="${capa}" class="card-image" alt="${titulo}">
-                        <div class="card-badge">Desejo</div>
-                    </div>
-                    <div class="card-content">
-                        <div class="card-title">${titulo}</div>
-                        <div class="card-author">por ${autor}</div>
-                        <button class="btn-remove-wishlist" onclick="removeFromWishlist(${item.id})">Remover</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    /**
-     * Loads and renders the user's personal library
-     */
-    async function loadUserLibrary(id) {
-        const libraryShowcase = document.getElementById('libraryShowcase');
-
+    function loadWishlist(wishlistData) {
         try {
-            const response = await fetch(`/api/biblioteca-pessoal/${id}`);
+            const container = document.getElementById('wishlistShowcase');
+            
+            if (!container) return;
+            
+            if (!wishlistData || wishlistData.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                        <p style="color: var(--text-secondary); font-size: 1.1rem;">💝 Sua lista de desejos está vazia. Adicione livros para acompanhá-los!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = wishlistData.map((item, index) => {
+                const livroId = item.livro_id;
+                const delay = `${index * 0.08}s`;
+                const relatedLivro = Array.isArray(item.livros) ? item.livros[0] : item.livros || {};
+                const coverUrl = relatedLivro?.capa_url || relatedLivro?.image || item.capa_url || item.image || 'https://via.placeholder.com/200x300/222222/00d2ff?text=Livro';
+                const title = relatedLivro?.titulo || relatedLivro?.title || `Livro #${livroId}`;
+                
+                return `
+                    <div class="book-shelf-item" style="animation-delay: ${delay}">
+                        <div class="book-3d-container">
+                            <div class="book-spine"></div>
+                            <img src="${coverUrl}" alt="${title}" class="book-cover" onclick="window.location.href='/dadoslivros/?id=${livroId}'" style="cursor: pointer;">
+                            <div class="book-shine"></div>
+                            <button class="btn-remove-wishlist" data-id="${item.id}">✕</button>
+                        </div>
+                        <div class="book-info-popover">
+                            <h4>${title}</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary);">Clique para ver detalhes</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+
+            // Adicionar listeners aos botões de remover
+            document.querySelectorAll('.btn-remove-wishlist').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const itemId = btn.getAttribute('data-id');
+                    removeWishlistItem(itemId, btn);
+                });
+            });
+        } catch (err) {
+            console.error('[Wishlist] Erro:', err.message);
+        }
+    }
+
+    /**
+     * Remove um item da lista de desejos
+     */
+    async function removeWishlistItem(itemId, btn) {
+        try {
+            const response = await fetch(`/api/desejos/${itemId}`, {
+                method: 'DELETE'
+            });
             const result = await response.json();
 
-            if (result.success && result.data) {
-                const library = result.data;
-
-                if (library.length === 0) {
-                    libraryShowcase.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">Sua biblioteca pessoal está vazia. Compre livros na loja!</p>`;
-                    return;
-                }
-
-                libraryShowcase.innerHTML = library.map(item => {
-                    const livro = item.livros || {};
-                    const capa = livro.capa_url || '/fotos/default-book.png';
-                    const titulo = livro.titulo || 'Título Desconhecido';
-                    const autor = livro.autor || 'Autor Desconhecido';
-
-                    return `
-                        <div class="book-card">
-                            <div class="card-image-wrap">
-                                <img src="${capa}" class="card-image" alt="${titulo}">
-                                <div class="card-badge">Biblioteca</div>
+            if (result.success) {
+                btn.closest('.book-shelf-item').style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    btn.closest('.book-shelf-item').remove();
+                    // Atualizar o contador
+                    const count = document.querySelectorAll('.book-shelf-item').length;
+                    document.getElementById('wishlistCount').textContent = count;
+                    
+                    // Se ficou vazio, mostrar mensagem
+                    if (count === 0) {
+                        const container = document.getElementById('wishlistShowcase');
+                        container.innerHTML = `
+                            <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                                <p style="color: var(--text-secondary); font-size: 1.1rem;">💝 Sua lista de desejos está vazia.</p>
                             </div>
-                            <div class="card-content">
-                                <div class="card-title">${titulo}</div>
-                                <div class="card-author">por ${autor}</div>
-                                <button class="btn-read" onclick="readBook('${item.livro_id}')">Ler</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                libraryShowcase.innerHTML = `<p>Erro ao carregar biblioteca.</p>`;
+                        `;
+                    }
+                }, 300);
+                showToast('Removido da lista de desejos', '#4caf50');
             }
+        } catch (e) {
+            showToast('Erro ao remover da lista', '#f44336');
+        }
+    }
+
+    async function loadLibraryShowcase(id) {
+        const libraryContainer = document.getElementById('libraryShowcase');
+        
+        if (!libraryContainer) return;
+        
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch(`/api/avaliacoes/user/${id}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
+            const result = await response.json();
+            libraryContainer.innerHTML = `<p>📖 Você tem ${result.data ? result.data.length : 0} avaliações</p>`;
         } catch (error) {
-            libraryShowcase.innerHTML = `<p>Erro ao conectar com o servidor.</p>`;
+            libraryContainer.innerHTML = `<p>Erro ao carregar biblioteca</p>`;
         }
     }
 
     /**
-     * Shows a toast notification
+     * Shows a toast notification with enhanced styling
      */
     function showToast(message, color = "#333") {
         toast.textContent = message;
         toast.style.backgroundColor = color;
+        toast.style.borderLeft = `4px solid ${color === "#333" ? "#00d2ff" : color}`;
         toast.className = "toast show";
-        setTimeout(() => { toast.classList.remove("show"); }, 3000);
-    }
-
-    /**
-     * Removes a book from the user's wishlist
-     */
-    async function removeFromWishlist(wishlistId) {
-        try {
-            const response = await fetch(`/api/desejos/${wishlistId}`, { method: 'DELETE' });
-            const result = await response.json();
-            if (result.success) {
-                showToast("Removido da lista de desejos!", "#4caf50");
-                // Reload the profile to update the list
-                loadUserProfile(userId);
-            } else {
-                showToast("Erro ao remover.");
-            }
-        } catch (e) {
-            showToast("Erro de conexão.");
-        }
-    }
-
-    /**
-     * Opens the book for reading
-     */
-    function readBook(bookId) {
-        // Redirect to the reading page with the book ID
-        window.location.href = `/leitura/Leitura.html?bookId=${bookId}`;
+        
+        // Auto hide after 3s
+        setTimeout(() => { 
+            toast.classList.remove("show");
+        }, 3000);
     }
 });
