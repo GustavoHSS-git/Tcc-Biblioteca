@@ -128,7 +128,7 @@ router.post('/desejos', async (req, res) => {
             return res.status(400).json({ success: false, message: "perfil_id e livro_id são obrigatórios" });
         }
 
-        // SALVA DIRETO: Inserimos direto na lista de desejos usando os dados enviados pelo front
+        // SALVA DIRETO: Insere direto na lista de desejos usando os dados enviados pelo front
         // Simplifiquei o payload para remover campos que podem estar causando erro de coluna inexistente
         const payload = {
             perfil_id: perfil_id,

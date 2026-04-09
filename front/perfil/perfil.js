@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
 
-            <h3 class="section-title">❤️ Minha Lista de Desejos</h3>
+            <h3 class="section-title">Minha Lista de Desejos</h3>
             <div id="wishlistShowcase" class="library-showcase">
                 <div class="loading-container">
                     <div class="spinner" style="width: 30px; height: 30px;"></div>
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
 
-            <h3 class="section-title">📚 Minha Biblioteca Pessoal</h3>
+            <h3 class="section-title">Minha Biblioteca Pessoal</h3>
             <div id="libraryShowcase" class="library-showcase">
                 <div class="loading-container">
                     <div class="spinner" style="width: 30px; height: 30px;"></div>

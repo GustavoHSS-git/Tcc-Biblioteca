@@ -1,5 +1,5 @@
 // ============================================
-// 📚 DADOS DOS LIVROS E MANGÁS (Carregados via APIs Externas)
+// DADOS DOS LIVROS E MANGÁS (Carregados via APIs Externas)
 // ============================================
 // Arrays que serão preenchidos pelas APIs do Google Books e Jikan
 // URLs das APIs externas: Google Books e Jikan
@@ -10,7 +10,7 @@ let filteredBooks = [];
 
 // PAGINAÇÃO
 let currentPage = 1;
-const itemsPerPage = 12; // 12 livros por página
+const itemsPerPage = 10; // 10 livros por página
 
 // ============================================
 // 🛒 GERENCIADOR DE CARRINHO (Classe)
@@ -71,7 +71,7 @@ class Cart {
     }
 }
 // ============================================
-// ❤️ WISHLIST (Lista de Desejos) nos Cards
+//  WISHLIST (Lista de Desejos) nos Cards
 // ============================================
 let userWishlist = []; // IDs dos livros na wishlist do usuário
 
@@ -205,7 +205,7 @@ const checkoutBtn = document.getElementById("checkoutBtn");
 let currentDetailBookId = null;
 
 // ============================================
-// 🔗 NAVEGAÇÃO PARA DADOS DO LIVRO
+//  NAVEGAÇÃO PARA DADOS DO LIVRO
 // ============================================
 function irParaDadosLivro() {
     if (currentDetailBookId) {
@@ -214,7 +214,7 @@ function irParaDadosLivro() {
 }
 
 // ============================================
-// 🔄 CARREGAR DADOS DAS APIs EXTERNAS
+//  CARREGAR DADOS DAS APIs EXTERNAS
 // ============================================
 
 // Função para buscar livros do Google Books
@@ -273,7 +273,7 @@ async function searchCombined(searchTerm) {
 }
 
 // ============================================
-// 🔄 CARREGAR DADOS DA API (Mantido para compatibilidade)
+//  CARREGAR DADOS DA API (Mantido para compatibilidade)
 // ============================================
 // Função assíncrona que faz requisição GET para a API
 // e popula o array 'books' com os dados retornados
@@ -330,7 +330,7 @@ function filterByCategory(category) {
 }
 
 // ============================================
-// 🎉 CARREGAR E APLICAR PROMOÇÕES
+//  CARREGAR E APLICAR PROMOÇÕES
 // ============================================
 
 // Função para carregar promoções ativas
@@ -393,7 +393,7 @@ function applyPromotionsToBooks(books, promotions) {
 }
 
 // ============================================
-// 📖 RENDERIZAR LIVROS
+// RENDERIZAR LIVROS
 // ============================================
 // Função que cria os cards (cartões) de cada livro no grid.
 // Recebe um array de livros e gera HTML com imagem, título, autor, preço e botões.
@@ -466,15 +466,21 @@ function renderBooks(booksToRender = filteredBooks) {
             `;
         }
 
+        const isInWishlist = userWishlist.some(w => w.livroId === book.id || w.livroId == book.id);
+
         return `
         <div class="book-card" data-category="${book.tipo || 'livro'}">
-            <img src="${imageUrl}" alt="${book.title}" class="book-cover" onerror="this.src='/fotos/default-book.png';">
+            <div class="book-cover-wrapper">
+                <img src="${imageUrl}" alt="${book.title}" class="book-cover" onerror="this.src='https://placehold.co/300x450/222222/FFFFFF/png?text=Sem+Capa';">
+                <button class="wishlist-card-btn ${isInWishlist ? 'active' : ''}" data-book-id="${book.id}" onclick="toggleWishlist('${book.id}', this, event)" title="Salvar nos Desejos">
+                    ${isInWishlist ? '❤️' : '🤍'}
+                </button>
+            </div>
             <div class="book-info">
                 <h3 class="book-title">${book.title}</h3>
                 <p class="book-author">por ${book.author}</p>
                 ${priceHtml}
                 <div class="book-actions">
-                    <button class="wishlist-card-btn" data-book-id="${book.id}" onclick="toggleWishlist('${book.id}', this, event)">🤍</button>
                     <button class="view-btn" onclick="showDetail('${book.id}')">Detalhes</button>
                     <button class="add-btn" onclick="addToCart('${book.id}')">Comprar</button>
                 </div>
@@ -562,7 +568,7 @@ if (searchInput) {
 }
 
 // ============================================
-// 🔍 BUSCA E FILTRO LOCAL
+//  BUSCA E FILTRO LOCAL
 // ============================================
 // filterBooks(): filtra livros por título ou autor e também por categoria!
 function filterBooks() {
@@ -601,7 +607,7 @@ function sortBooks() {
 // ============================================
 // 🎯 ELEMENTOS DO DOM (Fim das Buscas)
 // ============================================
-// 🛍️ CARRINHO (Funções)
+//  CARRINHO (Funções)
 // ============================================
 // addToCart(bookId): busca o livro por ID e o adiciona ao carrinho.
 // updateCartUI(): atualiza o modal do carrinho (lista de itens e total).
@@ -830,7 +836,7 @@ checkoutBtn.addEventListener("click", async () => {
             cart.clear();
             cartModal.classList.remove("active");
         } else {
-            showNotification('Erro ao registrar compra no banco de dados.', "error");
+            showNotification('Não foi possivel realizar compra (Erro ao registrar compra no banco de dados.)', "error");
         }
     } catch (err) {
         console.error(err);

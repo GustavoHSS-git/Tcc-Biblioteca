@@ -326,4 +326,9 @@ form {
     opacity: 1;
     border: none;
     padding: 0;
+    transform: translateY(-50%) scale(1) !important; 
+}
+
+.toggle-password:active {
+    transform: translateY(-50%) scale(0.9) !important;
 }
