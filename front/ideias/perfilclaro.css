@@ -14,8 +14,7 @@
 }
 
 body {
-   background: 
-    linear-gradient(135deg, rgba(58, 123, 213, 0.9), rgba(0, 115, 133, 0.9)); 
+    background: linear-gradient(to right, #0047b3, #0d6efd);
     color: var(--text-primary);
     font-family: 'Outfit', sans-serif;
     margin: 0;
@@ -30,10 +29,43 @@ body {
 
 .mt-100 { margin-top: 100px; }
 
+/* REUTILIZANDO NAVBAR DO SISTEMA */
+.page-top {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(15, 18, 24, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+
+.logout-btn {
+    background: transparent;
+    border: 1.5px solid #ff4444;
+    color: #ff4444;
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.logout-btn:hover {
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(255, 68, 68, 0.3);
+    transform: translateY(-2px);
+}
 
 /* PERFIL CARD */
 .profile-page-card {
-    background: linear-gradient(to right, #32373f, #32474b);;
+    background: #e6e9f9;
     border-radius: 0px;
     padding: 3rem;
     box-shadow: var(--shadow-soft), var(--shadow-glow);
@@ -254,7 +286,7 @@ body {
     font-weight: 700;
     position: relative;
     letter-spacing: 0.5px;
-    color: var(--text-primary);
+    color: #00d2ff;
     text-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
     animation: fadeInDown 0.6s ease 0.3s both;
 }

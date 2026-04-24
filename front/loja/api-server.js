@@ -1,5 +1,5 @@
 // ============================================
-// 📚 API REST - LIVRARIA
+//  API REST - LIVRARIA
 // ============================================
 // Servidor Express para servir dados de livros e mangás
 // Instalar dependências: npm install express cors

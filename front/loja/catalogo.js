@@ -32,7 +32,7 @@ class Cart {
         const existingItem = this.items.find(item => item.id === book.id);
 
         if (existingItem) {
-            existingItem.quantity += 1;
+            existingItem.quantity += 0;
         } else {
             this.items.push({ ...book, quantity: 1 });
         }
@@ -40,6 +40,7 @@ class Cart {
         this.save();
         this.updateUI();
     }
+
 
     remove(bookId) {
         this.items = this.items.filter(item => item.id.toString() !== bookId.toString());
@@ -170,11 +171,11 @@ async function toggleWishlist(bookId, btn, event) {
                 userWishlist.push({ wishlistId: json.data[0]?.id, livroId: bookId });
                 showNotification('Adicionado à lista de desejos! ❤️', 'success');
             } else {
-                btn.innerHTML = '🤍';
+                btn.innerHTML = `<img src="../fotos/salvar-instagram.png" alt="Salvar">`;
                 showNotification(json.message || 'Erro ao adicionar', 'error');
             }
         } catch (e) {
-            btn.innerHTML = '🤍';
+            btn.innerHTML = `<img src="../fotos/salvar-instagram.png" alt="Salvar">`;
             showNotification('Erro ao conectar com o servidor', 'error');
         }
     }
@@ -633,7 +634,7 @@ function updateCartUI() {
             <div class="cart-item">
                 <div class="cart-item-info">
                     <h3>${item.title}</h3>
-                    <p>${item.author} - Qtd: ${item.quantity}</p>
+                    <p>${item.author}</p>
                 </div>
                 <div class="cart-item-price">R$ ${(item.price * item.quantity).toFixed(2)}</div>
                 <button class="cart-remove-btn" onclick="removeFromCart('${item.id}')">Remover</button>
@@ -663,7 +664,30 @@ function showDetail(bookId) {
         document.getElementById("detailImg").src = imageUrl;
         document.getElementById("detailTitle").textContent = book.title;
         document.getElementById("detailAuthor").textContent = `por ${book.author}`;
-        document.getElementById("detailDescription").textContent = book.description;
+        
+        // Configurar descrição com "ver mais"
+        const fullDescription = book.description;
+        const shortDescription = book.description.length > 200 ? book.description.substring(0, 200) + '...' : book.description;
+        document.getElementById("detailDescription").textContent = shortDescription;
+        
+        const verMaisBtn = document.getElementById("verMaisBtn");
+        if (book.description.length > 200) {
+            verMaisBtn.style.display = 'block';
+            verMaisBtn.textContent = 'Ver mais';
+            verMaisBtn.onclick = () => {
+                const currentText = document.getElementById("detailDescription").textContent;
+                if (currentText.endsWith('...')) {
+                    document.getElementById("detailDescription").textContent = fullDescription;
+                    verMaisBtn.textContent = 'Ver menos';
+                } else {
+                    document.getElementById("detailDescription").textContent = shortDescription;
+                    verMaisBtn.textContent = 'Ver mais';
+                }
+            };
+        } else {
+            verMaisBtn.style.display = 'none';
+        }
+        
         document.getElementById("detailPrice").textContent = `R$ ${book.price.toFixed(2)}`;
         document.getElementById("addCartBtn").onclick = () => addToCart(book.id);
 
@@ -861,7 +885,7 @@ detailModal.addEventListener("click", (e) => {
 });
 
 // ============================================
-// 🚀 INICIALIZAR (DOMContentLoaded)
+//  INICIALIZAR (DOMContentLoaded)
 // ============================================
 // Executado quando o HTML termina de carregar.
 // Carrega os livros e mangás das APIs, atualiza o UI do carrinho e injeta animações CSS.
@@ -966,4 +990,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (sessionStorage.getItem('userId')) {
         await loadUserWishlist();
     }
+});
+
+// Função para traduzir a sinopse usando MyMemory (API gratuita)
+async function translateSynopsis() {
+    const descriptionElement = document.getElementById('detailDescription');
+    let originalText = descriptionElement.textContent;
+    const btn = document.getElementById('translateBtn');
+    btn.textContent = 'Traduzindo...';
+    btn.disabled = true;
+
+    // Truncar texto se exceder 500 caracteres (limite da API)
+    if (originalText.length > 500) {
+        originalText = originalText.substring(0, 500) + '...';
+    }
+
+    try {
+        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(originalText)}&langpair=en|pt`);
+
+        if (!response.ok) {
+            throw new Error('Erro na API de tradução');
+        }
+
+        const data = await response.json();
+        if (data.responseData && data.responseData.translatedText) {
+            descriptionElement.textContent = data.responseData.translatedText;
+            btn.textContent = 'Tradução Aplicada';
+        } else {
+            throw new Error('Resposta inválida da API');
+        }
+    } catch (error) {
+        console.error('Erro na tradução:', error);
+        alert('Erro ao traduzir. Tente novamente.');
+        btn.textContent = 'Traduzir Sinopse';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// Adicione o event listener no carregamento da página
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing code...
+    document.getElementById('translateBtn').addEventListener('click', translateSynopsis);
+    // ...existing code...
 });

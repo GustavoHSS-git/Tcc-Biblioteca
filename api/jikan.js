@@ -1,11 +1,36 @@
 const axios = require('axios');
 const { resolveImageUrl, GENERIC_MANGA_COVER } = require('./imageResolver');
 
+// Função para traduzir texto para português se necessário
+async function translateToPortuguese(text) {
+    if (!text || text.length < 10) return text;
+    
+    // Heurística simples: conta palavras em português
+    const ptWords = ['de', 'a', 'o', 'e', 'é', 'para', 'com', 'não', 'um', 'uma', 'os', 'as', 'do', 'da', 'em', 'por', 'que', 'se', 'como'];
+    const words = text.toLowerCase().split(/\s+/);
+    const ptCount = words.filter(w => ptWords.includes(w)).length;
+    
+    if (ptCount > words.length * 0.1) { // Se >10% das palavras são PT, assume que já está em PT
+        return text;
+    }
+    
+    // Caso contrário, traduz
+    try {
+        const response = await axios.get(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|pt`, { timeout: 5000 });
+        if (response.data.responseData && response.data.responseData.translatedText) {
+            return response.data.responseData.translatedText;
+        }
+    } catch (error) {
+        console.warn('[Jikan] Erro na tradução:', error.message);
+    }
+    return text; // Fallback para original
+}
+
 async function buscarMangas(query) {
     try {
         // A API Jikan v4 usa o endpoint /manga para pesquisas
         // Stricter filtering: sfw=true (Safe For Work) and genres_exclude=9,12,49 (Ecchi, Hentai, Erotica)
-        const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(query)}&limit=12&sfw=true&genres_exclude=9,12,49&unapproved=false`;
+        const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(query)}&limit=25&sfw=true&genres_exclude=9,12,49&unapproved=false`;
         console.log('[Jikan] Buscando mangás (SFW):', url);
         
         const response = await axios.get(url, { timeout: 5000 });
@@ -41,7 +66,7 @@ async function buscarMangas(query) {
                     author: manga.authors?.map(a => a.name).join(', ') || 'Autor Desconhecido',
                     price: 49.90,
                     image: imagemResolvida,
-                    description: manga.synopsis || 'Sem sinopse disponível.',
+                    description: await translateToPortuguese(manga.synopsis) || 'Sem sinopse disponível.',
                     category: 'manga'
                 };
             } catch (err) {
@@ -53,8 +78,20 @@ async function buscarMangas(query) {
         const mangasFiltrados = mangas.filter(m => m !== null);
         console.log(`[Jikan] Encontrados ${mangasFiltrados.length} mangás com imagens`);
         
+        // Filtrar duplicatas baseadas em título + autor
+        const uniqueMangas = [];
+        const seenKeys = new Set();
+        for (const manga of mangasFiltrados) {
+            const key = `${manga.title.toLowerCase()}|${manga.author.toLowerCase()}`;
+            if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                uniqueMangas.push(manga);
+            }
+        }
+        console.log(`[Jikan] Após filtrar duplicatas: ${uniqueMangas.length} mangás únicos`);
+        
         // Prefixar IDs em resultados
-        return mangasFiltrados.map(m => ({ ...m, id: `m-${m.id}` }));
+        return uniqueMangas.map(m => ({ ...m, id: `m-${m.id}` }));
     } catch (error) {
         console.error("[Jikan] Erro ao buscar mangás:", error.message);
         return [];

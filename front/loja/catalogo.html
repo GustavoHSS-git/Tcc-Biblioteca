@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo - Livraria</title>
-    <!-- Link para os estilos CSS -->
-    <!-- <link rel="stylesheet" href="/navbar.css"> -->
-    <link rel="stylesheet" href="/loja/catalogo.css">
+    <link rel="shortcut icon" href="/front/fotos/logo3.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/front/loja/catalogo.css">
 </head>
 <body>
     <!-- ============================
@@ -127,13 +126,16 @@
                     <h2 id="detailTitle"></h2>
                     <p class="detail-author" id="detailAuthor"></p>
                     <p class="detail-description" id="detailDescription"></p>
+                    <button class="ver-mais-btn" id="verMaisBtn" style="display: none;">Ver mais</button>
+                    <button class="translate-btn" id="translateBtn">Traduzir Sinopse</button>
                     <div class="detail-price">
                         <span class="price" id="detailPrice"></span>
                     </div>
-                    <!-- Botão para adicionar ao carrinho -->
+                    <!-- Botão para adicionar ao carrinho -->   
                     <button class="add-cart-btn" id="addCartBtn">Adicionar ao Carrinho</button>
+                    
                     <!-- Botão para ir aos detalhes completos -->
-                    <button class="saber-mais-btn" onclick="irParaDadosLivro()">Saber mais</button>
+                    <button class="saber-mais-btn" onclick="irParaDadosLivro()">Ver mais detalhes</button>
                     
                     <!-- Seção: Mais do mesmo autor -->
                     <div class="more-by-author">
@@ -152,11 +154,6 @@
     <footer class="footer">
         <p>&copy; Livraria 2025</p>
     </footer>
-
-    <!-- Seção de busca alternativa (não utilizada) -->
-    <section class="search-area">
-        <input type="text" placeholder="Pesquisar livros...">
-    </section>
 
     <!-- Script principal com toda a lógica do catálogo -->
     <script src="/loja/navbar-auth.js"></script>

@@ -13,6 +13,9 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+body {
     font-family: 'Inter', 'Nunito Sans', sans-serif;
 }
 
@@ -68,6 +71,15 @@
     object-fit: contain;
     display: block;
     cursor: pointer;
+}
+
+.brand-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    display: block;
+    cursor: pointer;
+    margin-right: 10px;
 }
 
 /* Links de Navegação */
@@ -150,14 +162,26 @@
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
+
 .logout-btn {
-    background: linear-gradient(135deg, #EF4444, #DC2626);
+    background: transparent;
+    border: 1.5px solid #ff4444;
+    color: #ff4444; 
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .logout-btn:hover {
-    background: linear-gradient(135deg, #F87171, #EF5350);
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(255, 68, 68, 0.3);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 /* ============================================

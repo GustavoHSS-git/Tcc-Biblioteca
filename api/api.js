@@ -6,7 +6,7 @@ const supabase = require('../supabase');
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ============================================
-// 📚 CRUD PARA LIVROS (Supabase)
+//  CRUD PARA LIVROS (Supabase)
 // ============================================
 
 // GET /api/livros - Listar todos os livros

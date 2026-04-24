@@ -6,7 +6,7 @@
 }
 
 body {
-	background: #f6f5f7;
+	background: linear-gradient(to right, #0047b3, #0d6efd);
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -27,8 +27,8 @@ h2 {
 }
 
 p {
-	font-size: 14px;
-	font-weight: 100;
+	font-size: 15px;
+	font-weight: 300;
 	line-height: 20px;
 	letter-spacing: 0.5px;
 	margin: 20px 0 30px;
@@ -66,13 +66,13 @@ button {
 	padding: 12px 45px;
 	letter-spacing: 1px;
 	text-transform: uppercase;
-	transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
 
 }
 
 button:hover {	
-	transform: scale(1.26); 
+	transform: scale(1.20);
 }
 button:active {
 	transform: scale(0.95);
@@ -123,7 +123,7 @@ input:focus {
 	position: relative;
 	overflow: hidden;
 	width: 100%;
-	max-width: 800px;
+	max-width: 500px;
 	min-height: 520px;
 }
 

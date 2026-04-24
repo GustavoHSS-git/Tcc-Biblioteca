@@ -25,12 +25,12 @@ async function loadBooksFromGoogle() {
 	try {
 		// Buscando várias franquias famosas para rechear bem o início com conteúdo geek
 		const [res1, res2, res3, res4, res5, res6] = await Promise.all([
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:"Rick Riordan"'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:"J.R.R. Tolkien"'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:"Douglas Adams"'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:"Suzanne Collins"'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:"Frank Herbert"'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:"George Orwell"')
+			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Rick Riordan'),
+			fetch('http://localhost:3000/api/externo/livros?q=inauthor:J.R.R. Tolkien'),
+			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Douglas Adams'),
+			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Suzanne Collins'),
+			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Frank Herbert'),
+			fetch('http://localhost:3000/api/externo/livros?q=inauthor:George Orwell')
 		]);
 
 		const baseData = await Promise.all([

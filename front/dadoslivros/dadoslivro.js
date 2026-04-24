@@ -157,7 +157,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (titleEl) titleEl.textContent = book.title;
         if (authorEl) authorEl.innerHTML = `por <strong>${book.author}</strong>`;
         if (categoryEl) categoryEl.textContent = book.category;
-        if (descEl) descEl.textContent = book.description;
+        if (descEl) {
+            const fullDescription = book.description;
+            const shortDescription = book.description.length > 200 ? book.description.substring(0, 200) + '...' : book.description;
+            descEl.textContent = shortDescription;
+            
+            const verMaisBtn = document.getElementById("verMaisBtnDados");
+            if (book.description.length > 200) {
+                verMaisBtn.style.display = 'block';
+                verMaisBtn.textContent = 'Ver mais';
+                verMaisBtn.onclick = () => {
+                    const currentText = descEl.textContent;
+                    if (currentText.endsWith('...')) {
+                        descEl.textContent = fullDescription;
+                        verMaisBtn.textContent = 'Ver menos';
+                    } else {
+                        descEl.textContent = shortDescription;
+                        verMaisBtn.textContent = 'Ver mais';
+                    }
+                };
+            } else {
+                verMaisBtn.style.display = 'none';
+            }
+        }
         
         if (coverImg) {
             coverImg.src = getValidImageUrl(book);

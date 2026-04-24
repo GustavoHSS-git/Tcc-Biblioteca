@@ -234,14 +234,23 @@ body {
 }
 
 .btn-read {
-    background: white;
-    color: #007385;
-    border: 2px solid #007385;
+    background: #ffffff; 
+    color: #007385; 
+    border: 2px solid #007385; 
+    padding: 10px 24px; 
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
 }
 
 .btn-read:hover {
-    background: #f5f5f5;
-    transform: translateY(-2px);
+    background: #007385;
+    border-color: #007385;
+    color: #ffffff;
+    transform: translateY(-1px); 
 }
 
 .book-details-box {
@@ -621,4 +630,44 @@ body {
     .related-books-grid {
         grid-template-columns: 1fr;
     }
+}
+.ver-mais-btn {
+    background: #ffffff; 
+    color: #007385; 
+    border: 2px solid #007385; 
+    padding: 10px 24px; 
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.ver-mais-btn:hover {
+   background: #007385;
+    border-color: #007385;
+    color: #ffffff;
+    transform: translateY(-1px);    
+}
+.btn-wishlist {
+    background: #ffffff; 
+    color: #007385; 
+    border: 2px solid #007385; 
+    padding: 10px 24px; 
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+.btn-wishlist:hover {
+   background: #007385;
+    border-color: #007385;
+    color: #ffffff;
+    transform: translateY(-1px);     
 }

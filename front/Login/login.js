@@ -119,4 +119,36 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.className = "toast show";
         setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
     }
+
+});
+
+const _supabase = supabase.createClient('https://felvojelnhthbrxhsgxj.supabase.co', 'sb_publishable_2PnMmf5jBHPHJ2xQkQFjIw_LVAEmr3f');
+
+window.onload = async () => {
+    // 1. Verifica se existe uma sessão (o link de e-mail cria uma automaticamente)
+    const { data: { session } } = await _supabase.auth.getSession();
+
+    // Se o usuário veio pelo link de recuperação, a sessão existirá
+    if (session) {
+        // Esconde o form de login normal e mostra o de redefinir
+        document.getElementById('forgotPasswordForm').style.display = 'none'; // ou o seu ID de form
+        document.getElementById('resetPasswordSection').style.display = 'block';
+    }
+};
+
+// 2. Função para salvar a nova senha
+document.getElementById('btnUpdatePassword').addEventListener('click', async () => {
+    const newPassword = document.getElementById('newPassword').value;
+
+    const { error } = await _supabase.auth.updateUser({
+        password: newPassword
+    });
+
+    if (error) {
+        alert("Erro ao atualizar: " + error.message);
+    } else {
+        alert("Senha alterada! Agora você pode entrar.");
+        await _supabase.auth.signOut(); // Desloga para ele entrar com a senha nova
+        window.location.href = 'Login.html'; 
+    }
 });

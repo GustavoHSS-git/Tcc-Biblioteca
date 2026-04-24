@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acesso - Livraria Digital</title>
+    <link rel="shortcut icon" href="/front/fotos/logo3.ico" type="image/x-icon">
     <link rel="stylesheet" href="/Login/login.css">
 
 
@@ -42,9 +43,17 @@
         </div>
         
         <button type="submit" class="btn-primary">Entrar</button>
-        <a href="#" class="forgot">Esqueceu sua senha?</a>
+        <a href="/front/esqueciasenha/esqueci.html" class="forgot">Esqueceu sua senha?</a>
     </form>
 </div>
+
+      
+<div id="resetPasswordSection" style="display: none;">
+    <h1>Crie uma nova senha</h1>
+    <input type="password" id="newPassword" placeholder="Nova senha" />
+    <button id="btnUpdatePassword">Salvar Nova Senha</button>
+</div>
+
 
         <div class="overlay-container">
             <div class="overlay">
@@ -67,6 +76,7 @@
     <!-- NOTIFICAÇÃO FLUTUANTE -->
     <div id="toast" class="toast"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/Login/login.js"></script>
 </body>
 </html>

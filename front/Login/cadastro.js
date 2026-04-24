@@ -1,5 +1,5 @@
 /**
- * 📝 FUNCIONALIDADES DO CADASTRO
+ * FUNCIONALIDADES DO CADASTRO
  * Script que gerencia a validação de novos usuários e integração com a API de registro.
  */
 

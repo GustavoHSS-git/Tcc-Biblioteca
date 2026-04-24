@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             clearTimeout(timeoutId);
             
             const result = await response.json();
-            libraryContainer.innerHTML = `<p>📖 Você tem ${result.data ? result.data.length : 0} avaliações</p>`;
+            libraryContainer.innerHTML = `<p> Você tem ${result.data ? result.data.length : 0} avaliações</p>`;
         } catch (error) {
             libraryContainer.innerHTML = `<p>Erro ao carregar biblioteca</p>`;
         }

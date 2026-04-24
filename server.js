@@ -96,6 +96,14 @@ app.get('/api/externo/livros', async (req, res) => {
         const placeholder = 'https://placehold.co/300x450/222222/FFFFFF/png?text=Sem+Capa';
         const searchTerms = q.toLowerCase().split(' ');
         
+        // Extrair termos de busca relevantes
+        let relevantTerms = searchTerms;
+        if (q.toLowerCase().startsWith('inauthor:')) {
+            // Para buscas por autor, usar apenas o nome do autor
+            const authorQuery = q.substring(9).replace(/"/g, '').toLowerCase();
+            relevantTerms = authorQuery.split(' ');
+        }
+        
         let books = response.data.items.map(item => {
             let img = item.volumeInfo.imageLinks?.thumbnail || item.volumeInfo.imageLinks?.smallThumbnail || placeholder;
             
@@ -129,7 +137,7 @@ app.get('/api/externo/livros', async (req, res) => {
             const categories = (b.categories || []).map(c => c.toLowerCase());
             
             // 1. Deve ter pelo menos um dos termos da busca no título ou autor
-            const matchesQuery = searchTerms.some(term => titleLower.includes(term) || authorLower.includes(term));
+            const matchesQuery = relevantTerms.some(term => titleLower.includes(term) || authorLower.includes(term));
             
             // 2. Não deve ser um item de "metadados" indesejado ou de categorias de referência
             const isUnwanted = unwantedKeywords.some(word => 

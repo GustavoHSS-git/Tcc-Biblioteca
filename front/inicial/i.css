@@ -10,12 +10,13 @@ body {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center; /* Centraliza verticalmente o conteúdo */
-	background-color: #007385;
+	background: 
+    linear-gradient(135deg, #3a7bd5e6, #0047b3); 
 	overflow: hidden; /* Esconde as barras de rolagem */
 	margin: 0;
 	padding: 90px 0 20px; /* Espaço superior para navbar fixa + respiro */
 }
-
+	
 .container {
 	max-width: 1220px;
 	margin: 0 auto;

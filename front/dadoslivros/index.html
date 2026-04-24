@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes do Livro - Biblioteca Digital</title>
+    <link rel="shortcut icon" href="/front/fotos/logo3.ico" type="image/x-icon">
     <link rel="stylesheet" href="/navbar.css">
     <link rel="stylesheet" href="/dadoslivros/dadoslivro.css">
 </head>
@@ -39,7 +40,7 @@
     <main class="book-details-page">
         <div class="book-details-container">
             <!-- COLUNA 1: CAPA -->
-            <div class="book-cover-section">
+            <div class="book-cover-section">    
                 <div class="book-cover">
                     <img src="/fotos/default-book.png" alt="Capa do livro" id="mainCover">
                 </div>
@@ -53,23 +54,13 @@
                     <span class="author">por <strong>Aguarde</strong></span>
                     <span class="category">—</span>
                 </div>
-
-                <!-- AVALIAÇÃO -->
-                <div class="rating-section">
-                    <div class="stars-display">
-                        <span class="star filled">★</span>
-                        <span class="star filled">★</span>
-                        <span class="star filled">★</span>
-                        <span class="star filled">★</span>
-                        <span class="star half">★</span>
-                    </div>
-                    <span class="rating-text">4,5 de 5 (3.566 avaliações)</span>
-                </div>
-
+                
+                
                 <!-- DESCRIÇÃO -->
                 <p class="book-description">
                     Buscando sinopse no banco de dados...
                 </p>
+                <button class="ver-mais-btn" id="verMaisBtnDados" style="display: none;">Ver mais</button>
 
                 <!-- AVALIAÇÃO DO USUÁRIO -->
                 <div class="user-rating-section">
@@ -95,7 +86,7 @@
                 <button class="btn-buy">Comprar Agora</button>
                 <button class="btn-read">Ler Amostra</button>
                 <button class="btn-wishlist" id="wishlistBtn">❤️ Adicionar aos Desejos</button>
-
+<iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/track/16bc97Ryn5J2N6v2ptK8XZ?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
                 <div class="book-details-box">
                     <h4>Informações</h4>
                     <ul class="details-list">
@@ -159,6 +150,8 @@
                 result.textContent = `Você avaliou com ${value} estrela${value > 1 ? 's' : ''}!`;
             });
         });
+
+        
     </script>
 </body>
 </html>

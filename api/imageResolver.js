@@ -1,6 +1,4 @@
-/**
- * ResolveURLs e placeholders para imagens de livros/mangás.
- */
+
 async function resolveImageUrl(url, title, author, type = 'book') {
     const GENERIC_BOOK_COVER = 'https://placehold.co/300x450/222222/FFFFFF/png?text=Livro+Sem+Capa&font=oswald';
     const GENERIC_MANGA_COVER = 'https://placehold.co/300x450/111111/EEEEEE/png?text=Manga+Sem+Capa&font=oswald';
