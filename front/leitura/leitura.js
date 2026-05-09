@@ -10,10 +10,20 @@ const defaultPages = [
 ];
 
 // Carrega páginas e metadados do localStorage se disponíveis
+function normalizePageArray(value) {
+    if (!Array.isArray(value)) return null;
+    const validPages = value.filter(page => typeof page === 'string' && page.trim());
+    return validPages.length ? validPages : null;
+}
+
 let pages = defaultPages;
 try {
     const stored = localStorage.getItem('readerPages');
-    if (stored) pages = JSON.parse(stored);
+    if (stored) {
+        const parsed = JSON.parse(stored);
+        const normalized = normalizePageArray(parsed);
+        if (normalized) pages = normalized;
+    }
 } catch (err) {
     console.warn('Erro ao ler readerPages do localStorage', err);
 }
@@ -57,10 +67,15 @@ function initReader() {
 function updatePage() {
     pageImage.style.opacity = '0';
     setTimeout(() => {
-        pageImage.src = pages[currentPage - 1];
+        const pageUrl = pages[currentPage - 1] || defaultPages[0];
+        pageImage.src = pageUrl;
         pageSlider.value = currentPage;
         pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
         pageImage.onload = () => pageImage.style.opacity = '1';
+        pageImage.onerror = () => {
+            console.warn('Imagem da página inválida, usando fallback');
+            if (pageUrl !== defaultPages[0]) pageImage.src = defaultPages[0];
+        };
     }, 200);
 }
 

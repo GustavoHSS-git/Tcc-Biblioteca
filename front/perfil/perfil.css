@@ -14,8 +14,7 @@
 }
 
 body {
-   background: 
-    linear-gradient(135deg, rgba(58, 123, 213, 0.9), rgba(0, 115, 133, 0.9)); 
+    background: linear-gradient(135deg, #3a7bd5e6, #007385);
     color: var(--text-primary);
     font-family: 'Outfit', sans-serif;
     margin: 0;
@@ -28,18 +27,22 @@ body {
     padding: 0 2rem;
 }
 
-.mt-100 { margin-top: 100px; }
+.mt-100 {
+    margin-top: 100px;
+}
 
 
 /* PERFIL CARD */
 .profile-page-card {
-    background: linear-gradient(to right, #32373f, #32474b);;
+    background: linear-gradient(to right, #32373f, #32474b);
+    ;
     border-radius: 0px;
     padding: 3rem;
     box-shadow: var(--shadow-soft), var(--shadow-glow);
     border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
+
 }
 
 .profile-page-card::before {
@@ -53,11 +56,17 @@ body {
     opacity: 0.5;
 }
 
-.profile-avatar-container {
+.avatar-wrapper {
     position: relative;
     width: 150px;
-    margin: 0 auto;
     height: 150px;
+    margin: 0 auto;
+}
+
+.profile-avatar-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     overflow: hidden;
     border: 4px solid var(--primary-color);
@@ -66,8 +75,15 @@ body {
 }
 
 @keyframes avatarGlow {
-    0%, 100% { box-shadow: 0 0 20px rgba(0, 210, 255, 0.2), inset 0 0 20px rgba(0, 210, 255, 0.1); }
-    50% { box-shadow: 0 0 30px rgba(0, 210, 255, 0.4), inset 0 0 20px rgba(0, 210, 255, 0.15); }
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.2), inset 0 0 20px rgba(0, 210, 255, 0.1);
+    }
+
+    50% {
+        box-shadow: 0 0 30px rgba(0, 210, 255, 0.4), inset 0 0 20px rgba(0, 210, 255, 0.15);
+    }
 }
 
 .profile-avatar {
@@ -78,8 +94,8 @@ body {
 
 .avatar-edit-overlay {
     position: absolute;
-    bottom: 0px;
-    right: 0px;
+    bottom: -5px;
+    right: -5px;
     background: var(--accent-gradient);
     color: white;
     width: 50px;
@@ -89,15 +105,15 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4);
+    box-shadow: 0 4px 15px rgba(0, 210, 255, 0.6);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     z-index: 10;
 }
 
 .avatar-edit-overlay:hover {
-    transform: scale(1.15) rotate(-10deg);
-    box-shadow: 0 6px 25px rgba(0, 210, 255, 0.6);
+    transform: scale(1.15);
+    box-shadow: 0 6px 25px rgba(0, 210, 255, 0.8);
 }
 
 .profile-header {
@@ -128,6 +144,7 @@ body {
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -143,7 +160,7 @@ body {
 .bio-editor {
     width: 100%;
     min-height: 100px;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1rem;
@@ -166,6 +183,7 @@ body {
     overflow: hidden;
     font-size: 0.95rem;
     letter-spacing: 0.5px;
+
 }
 
 .btn-save-bio::before {
@@ -175,7 +193,7 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -209,6 +227,7 @@ body {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -246,9 +265,18 @@ body {
     letter-spacing: 1px;
 }
 
+.section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 5rem;
+}
+
 .section-title {
     font-size: 1.8rem;
-    margin: 5rem 0 3rem 0; /* Aumentei o espaçamento superior e inferior */
+    margin: 0 0 1rem 0;
     border-left: 6px solid var(--primary-color);
     padding-left: 1.2rem;
     font-weight: 700;
@@ -257,6 +285,28 @@ body {
     color: var(--text-primary);
     text-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
     animation: fadeInDown 0.6s ease 0.3s both;
+}
+
+.btn-go-desejos {
+    background: var(--accent-gradient);
+    border: none;
+    padding: 0.8rem 1.8rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    animation: fadeInUp 0.6s ease 0.2s both;
+}
+
+.btn-go-desejos:hover {
+    opacity: 0.95;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 210, 255, 0.3);
 }
 
 .section-title::after {
@@ -291,6 +341,7 @@ body {
         opacity: 0;
         transform: scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -319,7 +370,7 @@ body {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.8);
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.7rem;
@@ -361,9 +412,14 @@ body {
     box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
 }
 
-@keyframes spin { 
-    0% { transform: rotate(0deg); } 
-    100% { transform: rotate(360deg); } 
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .toast {
@@ -378,7 +434,9 @@ body {
     z-index: 2000;
 }
 
-.toast.show { transform: translateX(0); }
+.toast.show {
+    transform: translateX(0);
+}
 
 /* --- LIBRARY SHOWCASE --- */
 .library-showcase {
@@ -396,11 +454,13 @@ body {
     animation: slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
     transform-style: preserve-3d;
-    z-index: 1; /* Define um z-index base para os livros */
+    z-index: 1;
+    /* Define um z-index base para os livros */
 }
 
 .book-shelf-item:hover {
-    z-index: 10002; /* Traz o livro hovered totalmente para frente de todos os outros */
+    z-index: 10002;
+    /* Traz o livro hovered totalmente para frente de todos os outros */
 }
 
 @keyframes slideInUp {
@@ -408,6 +468,7 @@ body {
         opacity: 0;
         transform: translateY(40px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -419,6 +480,7 @@ body {
         opacity: 1;
         transform: scale(1);
     }
+
     to {
         opacity: 0;
         transform: scale(0.95);
@@ -443,7 +505,7 @@ body {
     height: 100%;
     object-fit: cover;
     border-radius: 8px;
-    box-shadow: 
+    box-shadow:
         -8px 15px 30px rgba(0, 0, 0, 0.5),
         inset 0 0 20px rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(0, 210, 255, 0.2);
@@ -451,7 +513,7 @@ body {
 }
 
 .book-shelf-item:hover .book-cover {
-    box-shadow: 
+    box-shadow:
         -12px 20px 40px rgba(0, 210, 255, 0.3),
         inset 0 0 30px rgba(0, 210, 255, 0.1),
         0 0 40px rgba(0, 210, 255, 0.2);
@@ -464,12 +526,10 @@ body {
     width: 100%;
     height: 100%;
     border-radius: 8px;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.15) 0%,
-        transparent 50%,
-        rgba(0, 0, 0, 0.1) 100%
-    );
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.15) 0%,
+            transparent 50%,
+            rgba(0, 0, 0, 0.1) 100%);
     pointer-events: none;
 }
 
@@ -589,6 +649,7 @@ body {
         align-items: center;
         text-align: center;
     }
+
     .profile-stats {
         justify-content: center;
         width: auto;
@@ -597,10 +658,11 @@ body {
 
 .main-content {
     display: flex;
-    flex-direction: column; /* Mantém o fluxo vertical */
-    align-items: center;    /* Centraliza horizontalmente o conteúdo */
-    justify-content: flex-start; 
+    flex-direction: column;
+    /* Mantém o fluxo vertical */
+    align-items: center;
+    /* Centraliza horizontalmente o conteúdo */
+    justify-content: flex-start;
     min-height: calc(100vh - 100px);
     width: 100%;
 }
-

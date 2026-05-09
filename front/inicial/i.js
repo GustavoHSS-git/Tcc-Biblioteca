@@ -23,19 +23,15 @@ let isAnimating = false;
 // Função para buscar livros do Google Books (Carrossel Inicial)
 async function loadBooksFromGoogle() {
 	try {
-		// Buscando várias franquias famosas para rechear bem o início com conteúdo geek
-		const [res1, res2, res3, res4, res5, res6] = await Promise.all([
+		// Buscando 3 autores para 3 livros
+		const [res1, res2, res3] = await Promise.all([
 			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Rick Riordan'),
 			fetch('http://localhost:3000/api/externo/livros?q=inauthor:J.R.R. Tolkien'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Douglas Adams'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Suzanne Collins'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Frank Herbert'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:George Orwell')
+			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Douglas Adams')
 		]);
 
 		const baseData = await Promise.all([
-			res1.json(), res2.json(), res3.json(), 
-			res4.json(), res5.json(), res6.json()
+			res1.json(), res2.json(), res3.json()
 		]);
 
 		let todosLivros = [];
@@ -45,17 +41,45 @@ async function loadBooksFromGoogle() {
 			}
 		});
 
-		// Retorna apenas 6 livros embaralhados
+		// Retorna apenas 3 livros embaralhados
 		let embaralhados = todosLivros.sort(() => Math.random() - 0.5);
-		return embaralhados.slice(0, 6);
+		return embaralhados.slice(0, 3);
 	} catch (error) {
 		console.error('Erro ao buscar livros:', error);
 		return [];
 	}
 }
 
+// Função para buscar mangás do Jikan (MyAnimeList)
+async function loadMangasFromJikan() {
+	try {
+		// Buscando 3 mangás populares
+		const [res1, res2, res3] = await Promise.all([
+			fetch('http://localhost:3000/api/externo/mangas?q=Naruto'),
+			fetch('http://localhost:3000/api/externo/mangas?q=One Piece'),
+			fetch('http://localhost:3000/api/externo/mangas?q=Demon Slayer')
+		]);
+
+		const baseData = await Promise.all([
+			res1.json(), res2.json(), res3.json()
+		]);
+
+		let todosMangoes = [];
+		baseData.forEach(data => {
+			if (data.success && data.data && data.data.length > 0) {
+				// Pega apenas o primeiro mangá de cada busca
+				todosMangoes.push(data.data[0]);
+			}
+		});
+
+		return todosMangoes;
+	} catch (error) {
+		console.error('Erro ao buscar mangás:', error);
+		return [];
+	}
+
 // ============================================
-// 🏗️ CRIAR CARDS DINAMICAMENTE
+//  CRIAR CARDS DINAMICAMENTE
 // ============================================
 function createCards() {
 	books.forEach((book, index) => {
@@ -81,7 +105,7 @@ function createCards() {
 }
 
 // ============================================
-// 🔘 CRIAR DOTS DINAMICAMENTE
+//  CRIAR DOTS DINAMICAMENTE
 // ============================================
 function createDots() {
 	books.forEach((_, index) => {
@@ -94,7 +118,7 @@ function createDots() {
 }
 
 // ============================================
-// 🔄 ATUALIZAR CARROSSEL
+//  ATUALIZAR CARROSSEL
 // ============================================
 function updateCarousel(newIndex) {
 	if (isAnimating) return;
@@ -140,7 +164,7 @@ function updateCarousel(newIndex) {
 }
 
 // ============================================
-// 🎯 EVENT LISTENERS
+//  EVENT LISTENERS
 // ============================================
 function attachEventListeners() {
 	// Setas de navegação
@@ -180,15 +204,23 @@ function attachEventListeners() {
 }
 
 // ============================================
-// 🚀 INICIALIZAR
+//  INICIALIZAR
 // ============================================
 async function init() {
 	try {
-		// Carrega os livros das APIs
-		books = await loadBooksFromGoogle();
+		// Carrega os livros e mangás das APIs
+		const livros = await loadBooksFromGoogle();
+		const mangoes = await loadMangasFromJikan();
+
+		// Combina livros e mangás (alternando: livro, mangá, livro, mangá...)
+		books = [];
+		for (let i = 0; i < Math.max(livros.length, mangoes.length); i++) {
+			if (i < livros.length) books.push(livros[i]);
+			if (i < mangoes.length) books.push(mangoes[i]);
+		}
 
 		if (books.length === 0) {
-			console.warn('Nenhum livro foi carregado');
+			console.warn('Nenhum livro ou mangá foi carregado');
 			return;
 		}
 
@@ -207,4 +239,4 @@ if (document.readyState === "loading") {
 } else {
 	init();
 }
-
+}

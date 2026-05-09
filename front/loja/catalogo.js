@@ -8,9 +8,95 @@ let books = [];
 let allBooks = []; // Para armazenar livros + mangás combinados
 let filteredBooks = [];
 
+// ============================================
+// 📊 CONTADOR DE LIVROS E MANGÁS
+// ============================================
+const COUNTERS = {
+    books: 0,
+    mangas: 0,
+    total: 0,
+    equalSplit: 0
+};
+
+function updateBookMangaCounters() {
+    COUNTERS.books = books.filter(b => (b.tipo || 'livro').toString().toLowerCase() === 'livro').length;
+    COUNTERS.mangas = books.filter(b => (b.tipo || 'manga').toString().toLowerCase() === 'manga').length;
+    COUNTERS.total = books.length;
+    COUNTERS.equalSplit = Math.min(COUNTERS.books, COUNTERS.mangas);
+}
+
+function getTotalBooks() {
+    return COUNTERS.books;
+}
+
+function getTotalMangas() {
+    return COUNTERS.mangas;
+}
+
+function getTotalItems() {
+    return COUNTERS.total;
+}
+
 // PAGINAÇÃO
 let currentPage = 1;
-const itemsPerPage = 10; // 10 livros por página
+const itemsPerPage = 10; // 10 livros/mangás por página para 20 páginas com 200 itens
+
+function limitItemsToMaxPages(items, pageCount = 20) {
+    const maxItems = pageCount * itemsPerPage;
+    return items.length > maxItems ? items.slice(0, maxItems) : items;
+}
+
+function normalizeItemKey(item) {
+    const normalizeText = text => (text || '')
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .replace(/[^a-z0-9]/gi, '')
+        .toLowerCase();
+    return `${normalizeText(item.title)}|${normalizeText(item.author)}`;
+}
+
+function dedupeItems(items) {
+    const seen = new Set();
+    return items.filter(item => {
+        const key = normalizeItemKey(item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
+function isBook(item) {
+    return (item.tipo || item.category || item.type || 'livro').toString().toLowerCase() === 'livro';
+}
+
+function isManga(item) {
+    return (item.tipo || item.category || item.type || 'manga').toString().toLowerCase() === 'manga';
+}
+
+async function fetchExtraItems(fetcher, needed, existingItems = []) {
+    const existingKeys = new Set(existingItems.map(normalizeItemKey));
+    const result = [];
+    const searchTerms = fetcher === loadMangasFromJikan
+        ? ['shounen', 'fantasia', 'ação', 'aventura', 'drama', 'slice of life', 'isekai']
+        : ['ficção', 'fantasia', 'romance', 'mistério', 'aventura', 'jovem adulto', 'história', 'biografia'];
+
+    for (const term of searchTerms) {
+        if (result.length >= needed) break;
+        const items = await fetcher(term);
+        for (const item of items) {
+            const key = normalizeItemKey(item);
+            if (!existingKeys.has(key)) {
+                existingKeys.add(key);
+                result.push(item);
+                if (result.length >= needed) break;
+            }
+        }
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    return result.slice(0, needed);
+}
+
 
 // ============================================
 // 🛒 GERENCIADOR DE CARRINHO (Classe)
@@ -29,14 +115,7 @@ class Cart {
     }
 
     add(book) {
-        const existingItem = this.items.find(item => item.id === book.id);
-
-        if (existingItem) {
-            existingItem.quantity += 0;
-        } else {
-            this.items.push({ ...book, quantity: 1 });
-        }
-
+        this.items.push({ ...book, quantity: 1 });
         this.save();
         this.updateUI();
     }
@@ -297,6 +376,8 @@ async function searchExternal(tipo) {
             const promotions = await loadPromotions();
             books = applyPromotionsToBooks(resultados, promotions);
             filteredBooks = [...books];
+            updateBookMangaCounters();
+            currentPage = 1;
             renderBooks(books);
             showNotification(`Encontrados ${resultados.length} resultados!`);
         } else {
@@ -440,13 +521,33 @@ function getValidImageUrl(book) {
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCBmaWxsPSIjZGRkIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Q2FwYSBuw6NvIGRpc3BvbsOtdmVsPC90ZXh0Pjwvc3ZnPg==';
 }
 
+function getBookType(book) {
+    return (book.tipo || book.category || book.type || 'livro').toString().toLowerCase();
+}
+
+function distributeBooksAndMangas(items) {
+    const livros = items.filter(item => getBookType(item) === 'livro');
+    const mangas = items.filter(item => getBookType(item) === 'manga');
+    const distributed = [];
+    const maxLength = Math.max(livros.length, mangas.length);
+
+    for (let i = 0; i < maxLength; i++) {
+        if (i < livros.length) distributed.push(livros[i]);
+        if (i < mangas.length) distributed.push(mangas[i]);
+    }
+
+    // Se não tiver nenhum livro ou mangá, retorna a lista original
+    return distributed.length ? distributed : items;
+}
+
 function renderBooks(booksToRender = filteredBooks) {
     if (!booksGrid) return;
     
+    const distributedBooks = distributeBooksAndMangas(booksToRender);
     // Cálculo da fatia (slice) para a página atual
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const paginatedItems = booksToRender.slice(startIndex, endIndex);
+    const paginatedItems = distributedBooks.slice(startIndex, endIndex);
 
     if (paginatedItems.length === 0) {
         booksGrid.innerHTML = '<div class="no-results">Nenhum livro encontrado para esta página.</div>';
@@ -539,6 +640,7 @@ async function searchBooksFromAPI(searchTerm) {
             // IMPORTANTE: Atualizar 'books' para que o filtro local funcione posteriormente
             books = applyPromotionsToBooks(resultados, promotions);
             filteredBooks = [...books];
+            updateBookMangaCounters();
             
             currentPage = 1;
             renderBooks(filteredBooks);
@@ -616,8 +718,13 @@ function sortBooks() {
 function addToCart(bookId) {
     const book = books.find(b => b.id.toString() === bookId.toString());
     if (book) {
-        cart.add(book);
-        showNotification(`"${book.title}" adicionado ao carrinho!`);
+        const existingItem = cart.items.find(item => item.id === book.id);
+        if (existingItem) {
+            showNotification(`"${book.title}" já está no carrinho!`);
+        } else {
+            cart.add(book);
+            showNotification(`"${book.title}" adicionado ao carrinho!`);
+        }
     }
 }
 
@@ -966,14 +1073,31 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Embaralha para que os famosos e os do banco se misturem e apareçam logo de cara
             combinados = combinados.sort(() => Math.random() - 0.5);
 
-            // Limita a 80 itens para a página inicial (mais populado)
-            books = combinados.slice(0, 80);
+            let booksList = dedupeItems(combinados.filter(isBook));
+            let mangasList = dedupeItems(combinados.filter(isManga));
+
+            if (booksList.length < 50) {
+                const extraBooks = await fetchExtraItems(loadBooksFromGoogle, 50 - booksList.length, booksList);
+                booksList = booksList.concat(extraBooks);
+            }
+            if (mangasList.length < 50) {
+                const extraMangas = await fetchExtraItems(loadMangasFromJikan, 50 - mangasList.length, mangasList);
+                mangasList = mangasList.concat(extraMangas);
+            }
+
+            booksList = booksList.slice(0, 50);
+            mangasList = mangasList.slice(0, 50);
+            const combinedList = distributeBooksAndMangas([...booksList, ...mangasList]);
+
+            books = combinedList;
             filteredBooks = [...books];
             
             // Carregar promoções e aplicar
             const promotions = await loadPromotions();
             books = applyPromotionsToBooks(books, promotions);
             filteredBooks = [...books];
+            updateBookMangaCounters();
+            currentPage = 1;
             
             renderBooks(books);
             updateCartUI();

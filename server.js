@@ -39,6 +39,7 @@ app.use('/loja', express.static(path.join(__dirname, 'front', 'loja')));
 app.use('/admin', express.static(path.join(__dirname, 'front', 'admin')));
 app.use('/fotos', express.static(path.join(__dirname, 'front', 'fotos')));
 app.use('/perfil', express.static(path.join(__dirname, 'front', 'perfil')));
+app.use('/desejos', express.static(path.join(__dirname, 'front', 'desejos')));
 
 
 // GET /api/animes?q=nome
@@ -82,13 +83,14 @@ app.get('/api/externo/livros', async (req, res) => {
         if (cacheData?.json_data) return res.json({ success: true, data: cacheData.json_data });
 
         const apiKey = 'key=AIzaSyDBLlxQGqrbAD541dmNGPOyExA5qW-3goM';
+        const langQuery = '&langRestrict=pt';
         
         // Tenta primeiro uma busca por título para maior precisão
-        let response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(q)}&maxResults=20&printType=books&orderBy=relevance&${apiKey}`);
+        let response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(q)}&maxResults=20&printType=books&orderBy=relevance${langQuery}&${apiKey}`);
         
         // Se retornar pouco, tenta uma busca geral como fallback
         if (!response.data.items || response.data.items.length < 5) {
-            response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=40&printType=books&orderBy=relevance&${apiKey}`);
+            response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=40&printType=books&orderBy=relevance${langQuery}&${apiKey}`);
         }
         
         if (!response.data.items) return res.json({ success: true, data: [] });
@@ -149,6 +151,23 @@ app.get('/api/externo/livros', async (req, res) => {
             );
 
             return matchesQuery && !isUnwanted && !isReference && b.image !== placeholder;
+        });
+
+        const normalizeKey = (title, author) => {
+            const normalizeText = text => (text || '')
+                .normalize('NFD')
+                .replace(/\p{Diacritic}/gu, '')
+                .replace(/[^a-z0-9]/gi, '')
+                .toLowerCase();
+            return `${normalizeText(title)}|${normalizeText(author)}`;
+        };
+
+        const seenBooks = new Set();
+        books = books.filter(book => {
+            const key = normalizeKey(book.title, book.author);
+            if (seenBooks.has(key)) return false;
+            seenBooks.add(key);
+            return true;
         });
 
         await supabase.from('api_cache').upsert({ search_query: cacheKey, json_data: books }, { onConflict: 'search_query' });
@@ -304,28 +323,35 @@ app.get('/api/externo/mais-vendidos', async (req, res) => {
         const apiKey = '&key=AIzaSyDBLlxQGqrbAD541dmNGPOyExA5qW-3goM';
         
         // ============================================
-        // ✍️ LISTA VIP: COLOQUE AQUI OS LIVROS QUE VOCÊ QUER ESCOLHER !
-        // (Basta adicionar o nome entre aspas e separado por virgula)
+        // LISTA VIP: COLOQUE AQUI OS LIVROS QUE VOCÊ QUER ESCOLHER!
         // ============================================
         const LIVROS_ESCOLHIDOS = [
-            "Harry Potter", 
-            "Duna", 
-            "Percy Jackson", 
-            "Senhor dos Anéis", 
-            "The Witcher", 
-            "Game of Thrones", 
-            "Crepúsculo", 
-            "Jogos Vorazes", 
-            "As Crônicas de Nárnia", 
-            "O Hobbit",
-            "Maze Runner"
+            "Harry Potter", "Duna", "Percy Jackson", "Senhor dos Anéis", 
+            "The Witcher", "Game of Thrones", "Crepúsculo", "Jogos Vorazes", 
+            "As Crônicas de Nárnia", "O Hobbit", "Maze Runner",
+            "O Alquimista", "Pai Rico, Pai Pobre", "A Culpa é das Estrelas",
+            "Diário de um Banana", "O Código Da Vinci", "O Pequeno Príncipe",
+            "A Cabana", "Cem Anos de Solidão", "O Ladrão de Raios",
+            "A Esperança", "Extraordinário", "A Menina que Roubava Livros",
+            "It A Coisa", "O Iluminado", "A revolução dos bichos",
+            "1984 George Orwell", "Sapiens Uma Breve História da Humanidade",
+            "Hábitos Atômicos", "O Milagre da Manhã", "A sutil arte de ligar o foda-se",
+            "O Nome do Vento", "O Conto da Aia", "Flores para Algernon",
+            "O Caçador de Pipas", "Corte de Espinhos e Rosas", "Fahrenheit 451",
+            "Admirável Mundo Novo", "Matéria Escura", "O Silmarillion",
+            "E Não Sobrou Nenhum", "O Morro dos Ventos Uivantes", "Fundação",
+            "A Vida Invisível de Addie LaRue", "Essencialismo", "Rápido e Devagar",
+            "Pense de Novo", "Novembro de 63", "A Sombra do Vento",
+            "Gente Ansiosa", "O Homem Mais Rico da Babilônia"
         ];
 
         // 1. Mangás Famosos (Top 20 do Jikan)
         const jikanReq = axios.get(`https://api.jikan.moe/v4/top/manga?type=manga&filter=bypopularity&limit=20&sfw=true`);
         
         // 2. Busca OS LIVROS ESCOLHIDOS ACIMA (Google Books)
-        const queryESCOLHIDOS = LIVROS_ESCOLHIDOS.map(t => `intitle:${t}`).join(' OR ');
+        // Correção: Google Books falha com muitos 'OR'. Escolher 4 aleatórios por vez.
+        const sagasSorteadas = LIVROS_ESCOLHIDOS.sort(() => 0.5 - Math.random()).slice(0, 4);
+        const queryESCOLHIDOS = sagasSorteadas.map(t => `intitle:"${t}"`).join(' OR ');
         const googleSagasReq = axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(queryESCOLHIDOS)}&orderBy=relevance&printType=books&langRestrict=pt&maxResults=40${apiKey}`);
         
         const [jikanRes, gSagasRes] = await Promise.allSettled([jikanReq, googleSagasReq]);
@@ -367,6 +393,23 @@ app.get('/api/externo/mais-vendidos', async (req, res) => {
         combinados = combinados.filter(c => {
             const lowTitle = c.title.toLowerCase();
             return c.image && !c.image.includes('Sem+Capa') && !lowTitle.includes('sherlock');
+        });
+
+        const normalizeKey = (title, author) => {
+            const normalizeText = text => (text || '')
+                .normalize('NFD')
+                .replace(/\p{Diacritic}/gu, '')
+                .replace(/[^a-z0-9]/gi, '')
+                .toLowerCase();
+            return `${normalizeText(title)}|${normalizeText(author)}`;
+        };
+
+        const seenItems = new Set();
+        combinados = combinados.filter(item => {
+            const key = normalizeKey(item.title, item.author);
+            if (seenItems.has(key)) return false;
+            seenItems.add(key);
+            return true;
         });
 
         combinados.sort(() => Math.random() - 0.5);

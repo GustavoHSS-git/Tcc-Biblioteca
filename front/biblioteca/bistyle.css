@@ -5,7 +5,7 @@ body {
     margin: 0;
     padding: 0;
     padding-top: 65px; 
-    background-color: #007385;
+    background: linear-gradient(135deg, #3a7bd5e6, #007385);
     min-height: 100vh;
 } 
 

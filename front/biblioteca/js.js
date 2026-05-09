@@ -40,7 +40,9 @@
 
             // Renderiza os cards
             allItems.forEach((item, idx) => {
-                const imgUrl = encodeURI(item.image);
+                const placeholderCover = 'https://placehold.co/300x450/222222/FFFFFF/png?text=Sem+Capa';
+                const imgUrl = item.image ? encodeURI(item.image) : placeholderCover;
+                const fallbackCover = item.image || placeholderCover;
 
                 const wrapper = document.createElement('div');
                 wrapper.className = 'd-steam-card-wrapper';
@@ -52,7 +54,7 @@
                 card.addEventListener('click', async () => {
                     let pagesForReader = null;
                     let bookId = item.id;
-                    let bookTitle = item.title;
+                    let bookTitle = item.title || 'Livro';
 
                     try {
                         // Tenta buscar páginas da API se existirem
@@ -67,9 +69,9 @@
                         console.warn('Páginas não disponíveis para este item', err);
                     }
 
-                    // Fallback: usar a imagem da capa se não houver páginas
-                    if (!pagesForReader) {
-                        pagesForReader = [item.image];
+                    // Fallback: usar a imagem da capa se não houver páginas válidas
+                    if (!Array.isArray(pagesForReader) || !pagesForReader.length) {
+                        pagesForReader = [fallbackCover];
                     }
 
                     // Armazena dados no localStorage para o leitor

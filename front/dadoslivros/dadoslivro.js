@@ -2,6 +2,8 @@
 // 📖 DADOS E INTERAÇÕES DA PÁGINA DE DETALHES
 // ============================================
 
+const API_URL = '/api';
+
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. LER ID DA URL
     const params = new URLSearchParams(window.location.search);
@@ -12,8 +14,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const API_URL = '/api';
     const container = document.querySelector('.book-details-container');
+    const userId = sessionStorage.getItem('userId');
+    
+    // Cart elements
+    const cartBtn = document.getElementById('cartBtn');
+    const cartModal = document.getElementById('cartModal');
+    const closeCartBtn = document.getElementById('closeCart');
+    const cartItems = document.getElementById('cartItems');
+    const cartTotal = document.getElementById('cartTotal');
+    const checkoutBtn = document.getElementById('checkoutBtn');
     
     // Iniciar carregamento
     try {
@@ -21,6 +31,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error('Erro na inicialização:', err);
     }
+
+    // Cart event listeners
+    if (cartBtn) {
+        cartBtn.addEventListener('click', () => {
+            updateCartUI();
+            cartModal.style.display = 'block';
+        });
+    }
+
+    if (closeCartBtn) {
+        closeCartBtn.addEventListener('click', () => {
+            cartModal.style.display = 'none';
+        });
+    }
+
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            alert('Checkout não implementado ainda.');
+        });
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === cartModal) {
+            cartModal.style.display = 'none';
+        }
+    });
+
+    function updateCartUI() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const cartCount = document.getElementById('cartCount');
+        if (cartCount) {
+            cartCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+        }
+
+        if (cart.length === 0) {
+            cartItems.innerHTML = '<p class="empty-cart">Carrinho vazio</p>';
+        } else {
+            cartItems.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h3>${item.title}</h3>
+                        <p>${item.author}</p>
+                    </div>
+                    <div class="cart-item-price">R$ ${(item.price * item.quantity).toFixed(2)}</div>
+                    <button class="cart-remove-btn" onclick="removeFromCart('${item.id}')">Remover</button>
+                </div>
+            `).join('');
+        }
+
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        cartTotal.textContent = `R$ ${total.toFixed(2)}`;
+    }
+
+    function removeFromCart(bookId) {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const updatedCart = cart.filter(item => item.id.toString() !== bookId.toString());
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        updateCartUI();
+        const cartCount = document.getElementById('cartCount');
+        if (cartCount) cartCount.textContent = updatedCart.reduce((total, item) => total + item.quantity, 0);
+    }
+
+    // Make removeFromCart global
+    window.removeFromCart = removeFromCart;
+
+    // Initial cart update
+    updateCartUI();
 
     /**
      * Busca os detalhes do livro de múltiplas fontes
@@ -86,6 +164,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (book) {
             renderBookDetails(book);
             loadRelated(book);
+            setupBuyButton(book);
+            setupWishlistButton(book, userId);
+            setupReadButton(book);
         } else {
             showNotification('Livro não encontrado no sistema.', 'error');
             document.querySelector('.book-title').textContent = "Livro não encontrado";
@@ -281,30 +362,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function setupStars() {
-        const stars = document.querySelectorAll('.rating-stars .star');
-        const result = document.getElementById('rating-result');
-
-        stars.forEach(star => {
-            star.onclick = () => {
-                const value = star.getAttribute('data-value');
-                stars.forEach(s => s.classList.remove('selected'));
-                for (let i = 0; i < value; i++) stars[i].classList.add('selected');
-                result.textContent = `Você avaliou com ${value} estrelas!`;
-                showNotification('Avaliação enviada!', 'info');
-            };
-        });
+    function setupBuyButton(book) {
+        const buyBtn = document.querySelector('.btn-buy');
+        if (buyBtn) {
+            buyBtn.addEventListener('click', () => {
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                const existingItem = cart.find(item => item.id === book.id);
+                if (existingItem) {
+                    showNotification(`"${book.title}" já está no carrinho!`);
+                } else {
+                    cart.push({ ...book, quantity: 1 });
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    showNotification(`"${book.title}" adicionado ao carrinho!`);
+                    // Update cart count
+                    const cartCount = document.getElementById('cartCount');
+                    if (cartCount) cartCount.textContent = cart.length;
+                }
+            });
+        }
     }
 
-    function showNotification(message, type = 'success') {
-        const notification = document.createElement('div');
-        const colors = { success: '#4caf50', error: '#f44336', info: '#2196F3', warning: '#ff9800' };
-        notification.style.cssText = `position: fixed; top: 90px; right: 20px; background: ${colors[type]}; color: white; padding: 15px 20px; border-radius: 8px; z-index: 3000; font-weight: 600;`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
+    function setupReadButton(book) {
+        const readBtn = document.querySelector('.btn-read');
+        if (readBtn) {
+            readBtn.addEventListener('click', () => {
+                // Show sample text in a modal or alert
+                const sampleText = book.description.length > 500 ? book.description.substring(0, 500) + '...' : book.description;
+                alert(`Amostra do livro:\n\n${sampleText}`);
+            });
+        }
     }
 });
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    const colors = { success: '#4caf50', error: '#f44336', info: '#2196F3', warning: '#ff9800' };
+    notification.style.cssText = `position: fixed; top: 90px; right: 20px; background: ${colors[type]}; color: white; padding: 15px 20px; border-radius: 8px; z-index: 3000; font-weight: 600;`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
 
 
 /**

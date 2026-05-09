@@ -51,17 +51,18 @@ a {
 }
 a:hover {
     transform: scale(1.3);
-    background-color: #0d6dfd; 
+    	background: linear-gradient(135deg, #3a7bd5e6, #007385);
+
     color: #ffffff;
 }
 	 
 
 button {
 	border-radius: 20px;
-	border: 1px solid #0d6efd;
-	background-color: #0d6efd;
+	border: 1px solid #FFFFFF;
+	background: linear-gradient(135deg, #3a7bd5e6, #007385);
 	color: #FFFFFF;
-	font-size: 12px;
+	font-size: 12px;	
 	font-weight: bold;
 	padding: 12px 45px;
 	letter-spacing: 1px;
@@ -69,6 +70,20 @@ button {
 	transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
 
+}
+
+ghost {
+	border-radius: 20px;
+	border: 1px solid #FFFFFF;
+	background: linear-gradient(135deg, #FFFFFF, #FFFFFF);
+	color: #FFFFFF;
+	font-size: 12px;		
+	font-weight: bold;
+	padding: 12px 45px;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
 }
 
 button:hover {	
@@ -83,10 +98,10 @@ button:focus {
 }
 
 button.ghost {
-	background-color: #ffffff;
-	
-	color: #0047b3;
+	background: linear-gradient(135deg, #ffffffe6, #ffffff);
+    color: #1a7aa1;
 }
+
 
 form {
 	background-color: #FFFFFF;
@@ -187,8 +202,8 @@ input:focus {
 }
 
 .overlay {
-	background: #0d6efd;
-	background: linear-gradient(to right, #0047b3, #0d6efd);
+	
+	background: linear-gradient(135deg, #3a7bd5e6, #007385);
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-position: 0 0;

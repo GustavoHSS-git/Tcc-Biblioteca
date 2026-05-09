@@ -80,7 +80,7 @@ async function processarLivros(items) {
 async function buscarLivros(query) {
     try {
         console.log('[GoogleBooks] Buscando livros com termo:', query);
-        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=12&langRestrict=pt`;
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=40&langRestrict=pt`;
         
         const response = await axios.get(url, { timeout: 5000 });
         

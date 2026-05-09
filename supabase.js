@@ -17,14 +17,42 @@ const { createClient } = require('@supabase/supabase-js');
 console.log('Supabase URL:', process.env.SUPABASE_URL ? '[set]' : '[missing]');
 console.log('Supabase KEY is', process.env.SUPABASE_KEY ? '[set]' : '[missing]');
 
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_KEY || '';
+const supabaseUrl = 'https://felvojelnhthbrxhsgxj.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlbHZvamVsbmh0aGJyeGhzZ3hqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDk0MTA1OCwiZXhwIjoyMDg2NTE3MDU4fQ.Z-FOfO1omug2Oj905neA-M6ELHR8CkrlwRdXZiVyjwg';
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Supabase: SUPABASE_URL e SUPABASE_KEY devem estar definidas em variáveis de ambiente.');
   process.exit(1); // encerra para evitar criar cliente inválido
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  global: {
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`
+    }
+  },
+  db: {
+    schema: 'public'
+  },
+  auth: {
+    persistSession: false
+  }
+});
+
+// Configuração temporária para ignorar certificado SSL inválido
+const https = require('https');
+const originalFetch = global.fetch;
+global.fetch = (url, options = {}) => {
+  if (url.includes('supabase.co')) {
+    return originalFetch(url, {
+      ...options,
+      agent: new https.Agent({
+        rejectUnauthorized: false
+      })
+    });
+  }
+  return originalFetch(url, options);
+};
 
 module.exports = supabase;

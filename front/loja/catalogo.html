@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo - Livraria</title>
     <link rel="shortcut icon" href="/front/fotos/logo3.ico" type="image/x-icon">
-    <link rel="stylesheet" href="/front/loja/catalogo.css">
+    <link rel="stylesheet" href="./catalogo.css">
 </head>
 <body>
     <!-- ============================
@@ -13,24 +13,23 @@
          ============================ -->
     <header class="page-top">
         <nav class="navbar">
-            <div class="container">
+            <div class="container nav-container">
                 <div class="nav-left">
-                    <a href="/" class="brand">
+                    <a href="/inicial/i.html" class="brand">
                         <img src="/fotos/logo.png" alt="Logo Biblioteca" class="brand-img" />
                     </a>
                     <ul class="nav-links">
                         <li><a href="/inicial/i.html" class="nav-link">Início</a></li>
-                        <li><a href="/loja/catalogo.html" class="nav-link">Loja</a></li>
+                        <li><a href="/loja/catalogo.html" class="nav-link active">Loja</a></li>
                         <li><a href="/biblioteca/bibliotecaindex.html" class="nav-link">Biblioteca</a></li>
+                        <li><a href="/desejos/desejos.html" class="nav-link">Desejos</a></li>
                         <li><a href="/perfil/perfil.html" class="nav-link">Perfil</a></li>
                     </ul>
                 </div>
-                <div class="nav-right">
+                <div class="nav-right" style="display: flex; gap: 15px; align-items: center;">
                     <button class="cart-btn" id="cartBtn">
                         Carrinho (<span id="cartCount">0</span>)
                     </button>
-                </div>
-                <div class="nav-right">
                     <button id="logoutBtn" class="logout-btn">Sair</button>
                 </div>
             </div>
@@ -156,7 +155,7 @@
     </footer>
 
     <!-- Script principal com toda a lógica do catálogo -->
-    <script src="/loja/navbar-auth.js"></script>
-    <script src="/loja/catalogo.js"></script>
+    <script src="./navbar-auth.js"></script>
+    <script src="./catalogo.js"></script>
 </body>
 </html>

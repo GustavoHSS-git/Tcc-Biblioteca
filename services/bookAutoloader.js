@@ -23,7 +23,11 @@ class BookAutoloader {
   /**
    * 📚 Busca e processa livros do Google Books
    */
-  async loadGoogleBooks(searchTerms = ['bestsellers', 'ficção', 'romance', 'mistério', 'tecnologia']) {
+  async loadGoogleBooks(searchTerms = [
+    'bestsellers', 'ficção', 'romance', 'mistério', 'tecnologia',
+    'fantasia', 'thriller', 'drama', 'aventura', 'clássicos',  
+    'biografia', 'história', 'autoajuda', 'infantil'
+  ]) {
     try {
       this.log('Iniciando busca de livros no Google Books...');
 

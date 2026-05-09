@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- DOM ELEMENTS ---
     const profileContainer = document.getElementById('profileContent');
     const logoutBtn = document.getElementById('logoutBtn');
-    const toast = document.getElementById('toast');
 
     // --- INITIALIZATION ---
     loadUserProfile(userId);
@@ -26,12 +25,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-            
+
             const response = await fetch(`/api/perfil/${id}`, {
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
-            
+
             const result = await response.json();
 
             if (result.success) {
@@ -56,13 +55,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderProfile(user) {
         const avatarUrl = user.foto_perfil || 'https://placehold.co/150x150/222222/00d2ff?text=User';
         const bio = user.bio || "Este usuário ainda não escreveu uma bio.";
-        
+
         profileContainer.innerHTML = `
             <div class="profile-header">
-                <div class="profile-avatar-container">
-                    <img src="${avatarUrl}" alt="${user.nome}" class="profile-avatar" id="currentAvatar">
-                    <label for="avatarInput" class="avatar-edit-overlay">📷</label>
-                    <input type="file" id="avatarInput" accept="image/*" style="display: none">
+                <div class="avatar-wrapper">
+                    <div class="profile-avatar-container">
+                        <img src="${avatarUrl}" alt="${user.nome}" class="profile-avatar" id="currentAvatar">
+                    </div>
+                    <label for="avatarInput" class="avatar-edit-overlay" title="Trocar foto">📷</label>
+                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
                 </div>
                 
                 <div class="profile-info">
@@ -75,7 +76,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div id="bioEditContainer" style="display: none">
-                        <textarea id="bioTextArea" class="bio-editor" placeholder="Escreva sobre você...">${user.bio || ''}</textarea>
+                        <textarea id="bioTextArea" class="bio-editor" placeholder="Escreva sobre você..." maxlength="300">${user.bio || ''}</textarea>
+                        <div style="text-align: right; font-size: 0.8rem; color: var(--text-secondary); margin-top: -10px; margin-bottom: 15px;" id="bioCharCount">0 / 300</div>
                         <div style="display: flex; gap: 10px;">
                             <button class="btn-save-bio" id="saveBioBtn">Salvar</button>
                             <button class="btn-save-bio" id="cancelBioBtn" style="background: rgba(255,255,255,0.1)">Cancelar</button>
@@ -95,7 +97,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
 
-            <h3 class="section-title">Minha Lista de Desejos</h3>
+            <div class="section-title-row">
+                <h3 class="section-title">Minha Lista de Desejos</h3>
+                <a href="/desejos/desejos.html" class="btn-go-desejos">Ver todos os desejos</a>
+            </div>
             <div id="wishlistShowcase" class="library-showcase">
                 <div class="loading-container">
                     <div class="spinner" style="width: 30px; height: 30px;"></div>
@@ -129,26 +134,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         const saveBioBtn = document.getElementById('saveBioBtn');
         const cancelBioBtn = document.getElementById('cancelBioBtn');
         const avatarInput = document.getElementById('avatarInput');
+        const bioTextArea = document.getElementById('bioTextArea');
+        const bioCharCount = document.getElementById('bioCharCount');
+
+        let currentBioText = user.bio || '';
+
+        const updateCharCount = () => {
+            if (bioTextArea && bioCharCount) {
+                bioCharCount.textContent = `${bioTextArea.value.length} / 300 caracteres`;
+            }
+        };
+
+        if (bioTextArea) {
+            bioTextArea.addEventListener('input', updateCharCount);
+        }
 
         editBioBtn.addEventListener('click', () => {
             document.getElementById('bioDisplay').style.display = 'none';
             document.getElementById('bioEditContainer').style.display = 'block';
+            updateCharCount();
         });
 
         cancelBioBtn.addEventListener('click', () => {
+            bioTextArea.value = currentBioText;
             document.getElementById('bioDisplay').style.display = 'block';
             document.getElementById('bioEditContainer').style.display = 'none';
+            updateCharCount();
         });
 
         saveBioBtn.addEventListener('click', async () => {
             const newBio = document.getElementById('bioTextArea').value;
             saveBioBtn.disabled = true;
             saveBioBtn.textContent = "...";
-            
+
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-                
+
                 const response = await fetch(`/api/perfil/${user.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -156,11 +178,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
-                
+
                 const result = await response.json();
                 if (result.success) {
                     showToast("Bio atualizada!", "#4caf50");
-                    document.getElementById('bioText').textContent = newBio;
+                    currentBioText = newBio;
+                    document.getElementById('bioText').textContent = newBio || "Este usuário ainda não escreveu uma bio.";
                     cancelBioBtn.click();
                 } else {
                     showToast("Erro ao salvar bio.");
@@ -183,12 +206,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             reader.onload = async (event) => {
                 const imgData = event.target.result;
                 document.getElementById('currentAvatar').src = imgData;
-                
+
                 // Salvar no banco (URL base64 ou mock de upload)
                 try {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 5000);
-                    
+
                     await fetch(`/api/perfil/${user.id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -196,7 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         signal: controller.signal
                     });
                     clearTimeout(timeoutId);
-                    
+
                     showToast("Avatar atualizado!", "#4caf50");
                 } catch (err) {
                     showToast("Erro ao salvar avatar.");
@@ -209,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadUserRatings(id) {
         const ratingsList = document.getElementById('ratingsList');
         const statsCount = document.getElementById('statsCount');
-        
+
         try {
             console.log('[Ratings] Iniciando...');
             const controller = new AbortController();
@@ -217,12 +240,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('[Ratings] TIMEOUT!');
                 controller.abort();
             }, 5000);
-            
+
             const response = await fetch(`/api/avaliacoes/user/${id}`, {
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
-            
+
             console.log('[Ratings] Resposta recebida');
             const result = await response.json();
             console.log('[Ratings] Dados:', result);
@@ -231,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const ratings = result.data;
                 statsCount.textContent = ratings.length;
                 console.log('[Ratings] Total:', ratings.length);
-                
+
                 if (ratings.length === 0) {
                     ratingsList.innerHTML = `<p>Você ainda não avaliou nenhum livro.</p>`;
                 } else {
@@ -247,19 +270,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
-            
+
             const wishlistRes = await fetch(`/api/desejos/${id}`, {
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
-            
+
             const wishlistData = await wishlistRes.json();
-            
+
             if (wishlistData.success && Array.isArray(wishlistData.data)) {
                 document.getElementById('wishlistCount').textContent = wishlistData.data.length;
                 loadWishlist(wishlistData.data);
             }
-        } catch (e) { 
+        } catch (e) {
             // Erro silencioso se a lista de desejos falhar
         }
 
@@ -273,25 +296,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     function loadWishlist(wishlistData) {
         try {
             const container = document.getElementById('wishlistShowcase');
-            
+
             if (!container) return;
-            
+
             if (!wishlistData || wishlistData.length === 0) {
                 container.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
-                        <p style="color: var(--text-secondary); font-size: 1.1rem;">💝 Sua lista de desejos está vazia. Adicione livros para acompanhá-los!</p>
+                        <p style="color: var(--text-secondary); font-size: 1.1rem;">Sua lista de desejos está vazia. Adicione livros para exibir!</p>
                     </div>
                 `;
                 return;
             }
 
-            const html = wishlistData.map((item, index) => {
+            const displayedItems = wishlistData.slice(0, 6);
+            const html = displayedItems.map((item, index) => {
                 const livroId = item.livro_id;
                 const delay = `${index * 0.08}s`;
                 const relatedLivro = Array.isArray(item.livros) ? item.livros[0] : item.livros || {};
                 const coverUrl = relatedLivro?.capa_url || relatedLivro?.image || item.capa_url || item.image || 'https://via.placeholder.com/200x300/222222/00d2ff?text=Livro';
                 const title = relatedLivro?.titulo || relatedLivro?.title || `Livro #${livroId}`;
-                
+
                 return `
                     <div class="book-shelf-item" style="animation-delay: ${delay}">
                         <div class="book-3d-container">
@@ -307,7 +331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 `;
             }).join('');
-            
+
             container.innerHTML = html;
 
             // Adicionar listeners aos botões de remover
@@ -340,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Atualizar o contador
                     const count = document.querySelectorAll('.book-shelf-item').length;
                     document.getElementById('wishlistCount').textContent = count;
-                    
+
                     // Se ficou vazio, mostrar mensagem
                     if (count === 0) {
                         const container = document.getElementById('wishlistShowcase');
@@ -360,18 +384,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadLibraryShowcase(id) {
         const libraryContainer = document.getElementById('libraryShowcase');
-        
+
         if (!libraryContainer) return;
-        
+
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
-            
+
             const response = await fetch(`/api/avaliacoes/user/${id}`, {
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
-            
+
             const result = await response.json();
             libraryContainer.innerHTML = `<p> Você tem ${result.data ? result.data.length : 0} avaliações</p>`;
         } catch (error) {
@@ -380,17 +404,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
-     * Shows a toast notification with enhanced styling
+     * Substitui o antigo layout do toast por avisos nativos.
      */
     function showToast(message, color = "#333") {
-        toast.textContent = message;
-        toast.style.backgroundColor = color;
-        toast.style.borderLeft = `4px solid ${color === "#333" ? "#00d2ff" : color}`;
-        toast.className = "toast show";
-        
-        // Auto hide after 3s
-        setTimeout(() => { 
-            toast.classList.remove("show");
-        }, 3000);
+        alert(message);
     }
 });

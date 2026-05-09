@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
 
 
 
@@ -11,7 +12,7 @@ body {
 	align-items: center;
 	justify-content: center; /* Centraliza verticalmente o conteúdo */
 	background: 
-    linear-gradient(135deg, #3a7bd5e6, #0047b3); 
+    linear-gradient(135deg, #3a7bd5e6, #007385); 
 	overflow: hidden; /* Esconde as barras de rolagem */
 	margin: 0;
 	padding: 90px 0 20px; /* Espaço superior para navbar fixa + respiro */

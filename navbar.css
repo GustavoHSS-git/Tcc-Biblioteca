@@ -49,9 +49,12 @@ body {
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     height: 65px;
+    font-family: 'Inter', 'Nunito Sans', sans-serif;
 }
 
 .navbar .container {
+    max-width: 1220px;
+    padding: 0 20px;
     height: 100%;
     display: flex;
     align-items: center;

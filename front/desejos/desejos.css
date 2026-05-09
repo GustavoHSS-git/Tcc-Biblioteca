@@ -1,0 +1,112 @@
+/* Overlay de informa��es do livro */
+.d-steam-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.d-steam-card .wishlist-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.d-steam-card:hover .wishlist-card-overlay {
+    opacity: 1;
+}
+
+.wishlist-card-top {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.d-steam-card:hover .wishlist-card-top {
+    opacity: 1;
+}
+
+.remove-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(244, 67, 54, 0.9) !important;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.remove-button:hover {
+    transform: scale(1.1);
+    background: rgba(244, 67, 54, 1) !important;
+}
+
+.remove-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Meta (t�tulo e autor) - aparece no hover */
+.wishlist-card-meta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.d-steam-card:hover .wishlist-card-meta {
+    opacity: 1;
+}
+
+.wishlist-card-meta h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.wishlist-card-meta p {
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .d-steam-card:hover .wishlist-card-overlay {
+        opacity: 0.5;
+    }
+    
+    .d-steam-card:hover .wishlist-card-meta {
+        opacity: 1;
+    }
+    
+    .d-steam-card:hover .wishlist-card-top {
+        opacity: 1;
+    }
+}

@@ -12,24 +12,23 @@
     <!-- NAVBAR -->
     <header class="page-top">
         <nav class="navbar">
-            <div class="container">
+            <div class="container nav-container">
                 <div class="nav-left">
-                    <a href="/" class="brand">
+                    <a href="/inicial/i.html" class="brand">
                         <img src="/fotos/logo.png" alt="Logo Biblioteca" class="brand-img"> 
                     </a>
                     <ul class="nav-links">
                         <li><a href="/inicial/i.html" class="nav-link">Início</a></li>
                         <li><a href="/loja/catalogo.html" class="nav-link">Loja</a></li>
                         <li><a href="/biblioteca/bibliotecaindex.html" class="nav-link">Biblioteca</a></li>
+                        <li><a href="/desejos/desejos.html" class="nav-link">Desejos</a></li>
                         <li><a href="/perfil/perfil.html" class="nav-link">Perfil</a></li>
                     </ul>
                 </div>
-                <div class="nav-right">
+                <div class="nav-right" style="display: flex; gap: 15px; align-items: center;">
                     <button class="cart-btn" id="cartBtn">
-                        🛒 Carrinho (<span id="cartCount">0</span>)
+                        Carrinho (<span id="cartCount">0</span>)
                     </button>
-                </div>
-                <div class="nav-right">
                     <button id="logoutBtn" class="logout-btn">Sair</button>
                 </div>
             </div>
@@ -85,8 +84,7 @@
 
                 <button class="btn-buy">Comprar Agora</button>
                 <button class="btn-read">Ler Amostra</button>
-                <button class="btn-wishlist" id="wishlistBtn">❤️ Adicionar aos Desejos</button>
-<iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/track/16bc97Ryn5J2N6v2ptK8XZ?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                 <button class="btn-wishlist" id="wishlistBtn">❤️ Adicionar aos Desejos</button>
                 <div class="book-details-box">
                     <h4>Informações</h4>
                     <ul class="details-list">
@@ -130,6 +128,24 @@
             </div>
         </div>
     </main>
+
+    <!-- MODAL DO CARRINHO -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-modal-content">
+            <button class="close-btn" id="closeCart">&times;</button>
+            <h2>Seu Carrinho</h2>
+            <div class="cart-items" id="cartItems">
+                <p class="empty-cart">Carrinho vazio</p>
+            </div>
+            <div class="cart-summary">
+                <div class="cart-total">
+                    <strong>Total:</strong>
+                    <span id="cartTotal">R$ 0,00</span>
+                </div>
+                <button class="checkout-btn" id="checkoutBtn">Ir para Checkout</button>
+            </div>
+        </div>
+    </div>
 
     <script src="/loja/navbar-auth.js"></script>
     <script src="/dadoslivros/dadoslivro.js"></script>
