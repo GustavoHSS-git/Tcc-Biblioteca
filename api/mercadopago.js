@@ -1,34 +1,41 @@
-// server.js
-
 const express = require("express");
-const mercadopago = require("mercadopago");
 const cors = require("cors");
+
+const { MercadoPagoConfig, Payment } = require("mercadopago");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-mercadopago.configure({
-  access_token: "SEU_ACCESS_TOKEN"
+// CONFIGURAÇÃO
+const client = new MercadoPagoConfig({
+  accessToken: "TEST-2506783482072783-122110-babf5a52b54750334e4f3034271b17a9-583771665"
 });
 
-// ROTA PARA CRIAR PAGAMENTO PIX
+const payment = new Payment(client);
+
+// ROTA PIX
 app.post("/criar-pagamento", async (req, res) => {
+
   try {
+
     const { valor, email } = req.body;
 
-    const pagamento = await mercadopago.payment.create({
-      transaction_amount: Number(valor),
-      payment_method_id: "pix",
+    const resposta = await payment.create({
+      body: {
+        transaction_amount: Number(valor),
+        description: "Compra Biblioteca",
+        payment_method_id: "pix",
 
-      payer: {
-        email: email
+        payer: {
+          email: email
+        }
       }
     });
 
     const dadosPix =
-      pagamento.body.point_of_interaction.transaction_data;
+      resposta.point_of_interaction.transaction_data;
 
     res.json({
       qr_code: dadosPix.qr_code,
@@ -37,6 +44,7 @@ app.post("/criar-pagamento", async (req, res) => {
     });
 
   } catch (erro) {
+
     console.log(erro);
 
     res.status(500).json({
@@ -45,13 +53,7 @@ app.post("/criar-pagamento", async (req, res) => {
   }
 });
 
-// WEBHOOK
-app.post("/webhook", (req, res) => {
-  console.log("Pagamento atualizado:", req.body);
-
-  res.sendStatus(200);
-});
-
+// SERVIDOR
 app.listen(3000, () => {
   console.log("Servidor rodando na porta 3000");
 });
