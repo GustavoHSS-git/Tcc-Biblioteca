@@ -20,14 +20,23 @@ let isAnimating = false;
 // 📡 FUNÇÕES DE CARREGAMENTO DE DADOS
 // ============================================
 
+function shuffleArray(array) {
+	const shuffled = [...array];
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+	}
+	return shuffled;
+}
+
 // Função para buscar livros do Google Books (Carrossel Inicial)
 async function loadBooksFromGoogle() {
 	try {
 		// Buscando 3 autores para 3 livros
 		const [res1, res2, res3] = await Promise.all([
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Rick Riordan'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:J.R.R. Tolkien'),
-			fetch('http://localhost:3000/api/externo/livros?q=inauthor:Douglas Adams')
+			fetch('/api/externo/livros?q=inauthor:Rick Riordan'),
+			fetch('/api/externo/livros?q=inauthor:J.R.R. Tolkien'),
+			fetch('/api/externo/livros?q=inauthor:Douglas Adams')
 		]);
 
 		const baseData = await Promise.all([
@@ -53,30 +62,22 @@ async function loadBooksFromGoogle() {
 // Função para buscar mangás do Jikan (MyAnimeList)
 async function loadMangasFromJikan() {
 	try {
-		// Buscando 3 mangás populares
-		const [res1, res2, res3] = await Promise.all([
-			fetch('http://localhost:3000/api/externo/mangas?q=Naruto'),
-			fetch('http://localhost:3000/api/externo/mangas?q=One Piece'),
-			fetch('http://localhost:3000/api/externo/mangas?q=Demon Slayer')
-		]);
-
-		const baseData = await Promise.all([
-			res1.json(), res2.json(), res3.json()
-		]);
-
-		let todosMangoes = [];
-		baseData.forEach(data => {
-			if (data.success && data.data && data.data.length > 0) {
-				// Pega apenas o primeiro mangá de cada busca
-				todosMangoes.push(data.data[0]);
-			}
-		});
-
-		return todosMangoes;
+		const response = await fetch('/api/externo/mais-vendidos');
+		const result = await response.json();
+		if (result.success && Array.isArray(result.data)) {
+			const mangas = result.data.filter(item => {
+				const type = (item.tipo || item.category || item.type || '').toString().toLowerCase();
+				return type === 'manga';
+			});
+			return shuffleArray(mangas).slice(0, 3);
+		}
+		console.warn('API de mais-vendidos retornou formato inesperado:', result);
+		return [];
 	} catch (error) {
 		console.error('Erro ao buscar mangás:', error);
 		return [];
 	}
+}
 
 // ============================================
 //  CRIAR CARDS DINAMICAMENTE
@@ -209,8 +210,8 @@ function attachEventListeners() {
 async function init() {
 	try {
 		// Carrega os livros e mangás das APIs
-		const livros = await loadBooksFromGoogle();
-		const mangoes = await loadMangasFromJikan();
+		const livros = (await loadBooksFromGoogle()).slice(0, 3);
+		const mangoes = (await loadMangasFromJikan()).slice(0, 3);
 
 		// Combina livros e mangás (alternando: livro, mangá, livro, mangá...)
 		books = [];
@@ -238,5 +239,4 @@ if (document.readyState === "loading") {
 	document.addEventListener("DOMContentLoaded", init);
 } else {
 	init();
-}
 }

@@ -1158,3 +1158,40 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('translateBtn').addEventListener('click', translateSynopsis);
     // ...existing code...
 });
+
+
+    //==================
+//pix-ana bia//
+//==================
+document.getElementById("checkoutBtn").addEventListener("click", abrirPix);
+
+function abrirPix(valor, vendaId) {
+    
+    const codigoPayload = `ID-VENDA-${vendaId}-VALOR-${valor.toFixed(2)}`;
+    
+    const codigoElement = document.getElementById("codigoPix");
+    const qrImg = document.getElementById("qrPix"); // Ajustado para bater com o ID do HTML
+
+    if (codigoElement) codigoElement.innerText = codigoPayload;
+                                              
+    if (qrImg) {
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(codigoPayload)}`;
+    }
+
+    document.getElementById("pixModal").style.display = "flex";
+}
+
+function fecharPix() {
+  document.getElementById("pixModal").style.display = "none";
+}
+
+function copiarPix() {
+  let texto = document.getElementById("codigoPix").innerText;
+
+  navigator.clipboard.writeText(texto);
+
+  alert("Código copiado");
+}
+//=====================
+//api mercado pago
+//====================

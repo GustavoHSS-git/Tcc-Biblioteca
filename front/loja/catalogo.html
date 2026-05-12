@@ -103,6 +103,28 @@
         </div>
     </div>
 
+    
+
+<!--===========================-->
+    <!-- Modal pixcsi-- ana bia>-->
+    <!--===========================-->
+    <div class="pix-modal" id="pixModal" style="display: none;"> <div class="pix-modal-content">
+        <button class="close-btn" onclick="fecharPix()">&times;</button> <h2>Pagar com Pix</h2>
+
+        <div class="pix-container" style="text-align: center; padding: 20px;">
+            <img id="qrPix" src="" alt="QR Code Pix" style="margin-bottom: 15px;"> <p id="codigoPix" style="word-break: break-all; font-family: monospace; background: #eee; padding: 10px;"></p>
+        </div>
+        <div class="pix-actions">
+             <button class="checkout-btn" onclick="copiarPix()">Copiar código</button>
+             <button class="view-btn" onclick="fecharPix()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
     <!-- ============================
          MODAL DE DETALHES DO LIVRO
          ============================ -->
@@ -159,3 +181,30 @@
     <script src="./catalogo.js"></script>
 </body>
 </html>
+
+
+<button onclick="pagar()">Pagar</button>
+
+<img id="qr" width="250">
+
+<script>
+async function pagar() {
+
+  const resposta = await fetch("http://localhost:3000/criar-pagamento", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+      valor: 50,
+      email: "cliente@email.com"
+    })
+  });
+
+  const dados = await resposta.json();
+
+  document.getElementById("qr").src =
+    "data:image/png;base64," + dados.qr_code_base64;
+}
+</script>

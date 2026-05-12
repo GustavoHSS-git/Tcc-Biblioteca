@@ -944,3 +944,46 @@ app.listen(PORT, () => {
     console.log(`🥳 Servidor rodando em http://localhost:${PORT}`);
     console.log(`🤠 Biblioteca Digital - Página inicial: Login`);
 });
+
+
+app.post('/api/vendas', async (req, res) => {
+    const { total, perfil_id, items } = req.body;
+
+    try {
+        // GERAR O PIX NO MERCADO PAGO
+        const mpResponse = await payment.create({
+            body: {
+                transaction_amount: Number(total),
+                description: 'Compra de Livro',
+                payment_method_id: 'pix',
+                payer: { email: 'cliente@exemplo.com' }
+            }
+        });
+
+        // SALVAR NO BANCO 
+        const { data, error } = await supabase
+            .from('vendas')
+            .insert([{ 
+                perfil_id: perfil_id, 
+                total: total 
+            }]);
+
+        if (error) throw error;
+
+        // DEVOLVER O QR CODE PARA O FRONTEND
+        res.json({
+            success: true,
+            qrCodeBase64: mpResponse.point_of_interaction.transaction_data.qr_code_base64,
+            qrCode: mpResponse.point_of_interaction.transaction_data.qr_code
+        });
+
+    } catch (error) {
+        console.error("Erro na operação:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`🥳 Servidor rodando em http://localhost:${PORT}`);
+    console.log(`🤠 Biblioteca Digital - Página inicial: Login`);
+});

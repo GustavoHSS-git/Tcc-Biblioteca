@@ -20,12 +20,21 @@
     "axios": "^1.14.0",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
-    "express": "^4.22.1",
+    "express": "^4.22.2",
     "install": "^0.13.0",
+    "mercadopago": "^2.12.0",
     "node.js": "^0.0.1-security",
     "translate.js": "^1.3.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GustavoHSS-git/Tcc-Biblioteca.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GustavoHSS-git/Tcc-Biblioteca/issues"
+  },
+  "homepage": "https://github.com/GustavoHSS-git/Tcc-Biblioteca#readme"
 }
