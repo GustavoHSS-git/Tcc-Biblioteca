@@ -12,8 +12,9 @@ body {
 	align-items: center;
 	flex-direction: column;
 	font-family: 'Montserrat', sans-serif;
-	height: 100vh;
-	margin: -20px 0 50px;
+	min-height: 100vh;
+	margin: 0;
+	padding: 20px 0 50px;
 }
 
 h1 {
@@ -281,8 +282,35 @@ input:focus {
 @media (max-width: 768px) {
     .container {
         width: 90%;
-        min-height: 600px;
+		min-height: 520px;
     }
+}
+
+/* Ajustes para mobile pequeno: permite rolagem vertical e evita cortar o conteúdo */
+@media (max-width: 480px) {
+	body {
+		align-items: flex-start;
+		padding-top: 30px;
+	}
+
+	.container {
+		width: 95%;
+		min-height: auto;
+		margin-bottom: 20px;
+		overflow: visible;
+	}
+
+	form {
+		padding: 20px;
+	}
+
+	.form-logo {
+		width: 80px;
+	}
+
+	.container {
+		max-width: 420px;
+	}
 }
 
 .form-logo {

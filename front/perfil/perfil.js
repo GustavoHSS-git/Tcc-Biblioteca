@@ -107,7 +107,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
 
-            <h3 class="section-title">Minhas Avaliações</h3>
+            <div class="section-title-row">
+                <h3 class="section-title">Minhas Avaliações</h3>
+                <div id="ratingsAction"></div>
+            </div>
             <div id="ratingsList" class="ratings-grid">
                 <div class="loading-container">
                     <div class="spinner" style="width: 30px; height: 30px;"></div>
@@ -212,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-                    await fetch(`/api/perfil/${user.id}`, {
+                            await fetch(`/api/perfil/${user.id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ nome: user.nome, bio: user.bio, foto_perfil: imgData }),
@@ -234,36 +237,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         const statsCount = document.getElementById('statsCount');
 
         try {
-            console.log('[Ratings] Iniciando...');
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => {
-                console.log('[Ratings] TIMEOUT!');
-                controller.abort();
-            }, 5000);
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
 
             const response = await fetch(`/api/avaliacoes/user/${id}`, {
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
 
-            console.log('[Ratings] Resposta recebida');
             const result = await response.json();
-            console.log('[Ratings] Dados:', result);
 
-            if (result.success && result.data) {
+            if (result.success && Array.isArray(result.data)) {
                 const ratings = result.data;
                 statsCount.textContent = ratings.length;
-                console.log('[Ratings] Total:', ratings.length);
-
-                if (ratings.length === 0) {
-                    ratingsList.innerHTML = `<p>Você ainda não avaliou nenhum livro.</p>`;
-                } else {
-                    ratingsList.innerHTML = `<p>${ratings.length} avaliações carregadas</p>`;
-                }
+                renderRatings(ratings.slice(0, 6));
+                renderRatingsPreviewActions(ratings.length);
+            } else {
+                statsCount.textContent = '0';
+                ratingsList.innerHTML = `<p>Não foi possível carregar suas avaliações.</p>`;
             }
         } catch (error) {
-            console.error('[Ratings] Error:', error.message);
-            ratingsList.innerHTML = `<p>Erro ao carregar avaliações: ${error.message}</p>`;
+            console.error('[Ratings] Error:', error);
+            statsCount.textContent = '0';
+            ratingsList.innerHTML = `<p>Erro ao carregar avaliações.</p>`;
         }
 
         // Carregar wishlist count e exibição
@@ -288,6 +284,59 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Carregar biblioteca pessoal
         loadLibraryShowcase(id);
+    }
+
+    function renderRatingsPreviewActions(totalCount) {
+        const ratingsAction = document.getElementById('ratingsAction');
+        if (!ratingsAction) return;
+
+        if (totalCount > 0) {
+            ratingsAction.innerHTML = `
+                <button class="btn-go-desejos" onclick="window.location.href='/perfil/avaliacoes.html'">
+                    Ver todas as avaliações (${totalCount})
+                </button>
+            `;
+        } else {
+            ratingsAction.innerHTML = '';
+        }
+    }
+
+    function renderRatings(ratings) {
+        const ratingsList = document.getElementById('ratingsList');
+        if (!ratingsList) return;
+
+        if (!ratings.length) {
+            ratingsList.innerHTML = `<p>Você ainda não avaliou nenhum livro.</p>`;
+            return;
+        }
+
+        ratingsList.innerHTML = ratings.map((review) => {
+            const livro = Array.isArray(review.livros) ? review.livros[0] : review.livros || {};
+            const title = livro.titulo || livro.title || `Livro #${review.livro_id}`;
+            const author = livro.autor || livro.author || 'Autor desconhecido';
+            const cover = livro.capa_url || livro.image || 'https://placehold.co/220x300/222222/00d2ff?text=Sem+Capa';
+            const note = Number(review.nota || 0).toFixed(1);
+            const comment = review.comentario || 'Sem comentário';
+            const date = review.created_at ? new Date(review.created_at).toLocaleDateString('pt-BR') : '';
+            const bookId = livro.id || review.livro_id;
+            const snippet = comment.length > 90 ? `${comment.slice(0, 90)}...` : comment;
+
+            return `
+                <div class="d-steam-card-wrapper">
+                    <div class="d-steam-card wishlist-card" style="background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.55)), url('${cover}')">
+                        <div class="wishlist-card-overlay"></div>
+                        <div class="wishlist-card-meta">
+                            <h3>${title}</h3>
+                            <p>${author}</p>
+                            ${date ? `<p style="margin-top:0.6rem; font-size:0.82rem; color:#c7d9ff;">${date}</p>` : ''}
+                            <p style="margin-top:0.65rem; font-size:0.84rem; line-height:1.35; color:#f5f5f5; white-space: normal; max-height:4.5rem; overflow:hidden;">${snippet}</p>
+                            <p style="margin-top:0.7rem; font-size:0.85rem; color:#00d2ff; font-weight:700;">Nota: ${note} / 5</p>
+                            ${bookId ? `<button class="btn-go-desejos" onclick="window.location.href='/dadoslivros/?id=${bookId}'">Ver livro</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     /**
@@ -315,18 +364,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const relatedLivro = Array.isArray(item.livros) ? item.livros[0] : item.livros || {};
                 const coverUrl = relatedLivro?.capa_url || relatedLivro?.image || item.capa_url || item.image || 'https://via.placeholder.com/200x300/222222/00d2ff?text=Livro';
                 const title = relatedLivro?.titulo || relatedLivro?.title || `Livro #${livroId}`;
+                const author = relatedLivro?.autor || relatedLivro?.author || 'Autor desconhecido';
+                const bookId = relatedLivro?.id || livroId;
 
                 return `
-                    <div class="book-shelf-item" style="animation-delay: ${delay}">
-                        <div class="book-3d-container">
-                            <div class="book-spine"></div>
-                            <img src="${coverUrl}" alt="${title}" class="book-cover" onclick="window.location.href='/dadoslivros/?id=${livroId}'" style="cursor: pointer;">
-                            <div class="book-shine"></div>
-                            <button class="btn-remove-wishlist" data-id="${item.id}">✕</button>
-                        </div>
-                        <div class="book-info-popover">
-                            <h4>${title}</h4>
-                            <p style="font-size: 0.85rem; color: var(--text-secondary);">Clique para ver detalhes</p>
+                    <div class="d-steam-card-wrapper" style="animation-delay: ${delay}">
+                        <div class="d-steam-card wishlist-card" data-book-id="${bookId}" style="background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.55)), url('${coverUrl}')">
+                            <div class="wishlist-card-overlay"></div>
+                            <div class="wishlist-card-meta">
+                                <h3>${title}</h3>
+                                <p>${author}</p>
+                                <div style="margin-top: auto; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                    <button class="btn-go-desejos" type="button">Ver livro</button>
+                                    <button class="btn-remove-wishlist" type="button" data-id="${item.id}" title="Remover dos desejos">✕</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -334,8 +386,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             container.innerHTML = html;
 
-            // Adicionar listeners aos botões de remover
-            document.querySelectorAll('.btn-remove-wishlist').forEach(btn => {
+            document.querySelectorAll('#wishlistShowcase .d-steam-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const bookId = card.getAttribute('data-book-id');
+                    if (bookId) {
+                        window.location.href = `/dadoslivros/?id=${bookId}`;
+                    }
+                });
+            });
+
+            document.querySelectorAll('#wishlistShowcase .btn-remove-wishlist').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const itemId = btn.getAttribute('data-id');

@@ -1,0 +1,14 @@
+*filtragem de livros e mangás*
+*responsividade*
+
+arrumar no perfil, as avaliações e a biblioteca pessoal
+esqueci a senha funcionar
+
+BUGS ENCONTRADOS:
+- Perfil: componente de biblioteca pessoal carrega dados de `/api/avaliacoes/user/:id` em vez da coleção real do usuário. O resultado é a exibição de contagem/avaliações em vez da biblioteca de livros.
+- Perfil: seção de avaliações apenas mostra número de avaliações ou mensagens de erro; não há renderização robusta de cards de avaliações.
+- Esqueci a senha: `front/esqueciasenha/esqueci.js` usa `redirectTo: 'http://localhost:3000/reset-callback'`, o que provavelmente não funciona em produção e pode quebrar o fluxo de reset de senha.
+- Desejos: front `desejos.js` assume `item.livros` como array e usa `item.livros[0]`, mas a API de desejos pode retornar um objeto ou nenhum join, causando erro ao renderizar.
+- API: existem rotas duplicadas para `/api/desejos/:perfil_id` e `/api/desejos/:id` em `api/api.js`, o que pode gerar conflito ou comportamento inconsistente.
+- Filtros: biblioteca e loja usam campos de dados externos que nem sempre existem (`title`, `imagem`, `autor`), então itens sem imagem/capa podem quebrar o layout ou exibir `undefined`.
+- Rota de leitura/biblioteca: `bibliotecaindex.html` e outras páginas usam caminhos relativos mistos (`/Login/login.css`, `/front/esqueciasenha/esqueci.html`), que funcionam só porque o servidor serve a raiz e podem causar inconsistência de navegação.

@@ -6,10 +6,28 @@ const PROMOTIONS_API_URL = '/api/promocoes';
 let books = [];
 let editingBookId = null;
 
+const MAX_WORDS_DEFAULT = 50;
+
+function countWords(text) {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function enforceWordLimit(textarea, counter, limit = MAX_WORDS_DEFAULT) {
+    const words = textarea.value.trim().split(/\s+/).filter(Boolean);
+    if (words.length > limit) {
+        textarea.value = words.slice(0, limit).join(' ');
+    }
+    const currentWords = countWords(textarea.value);
+    if (counter) {
+        counter.textContent = `${currentWords} / ${limit} palavras`;
+    }
+}
+
 const showLivrosBtn = document.getElementById('showLivros');
 const showPromosBtn = document.getElementById('showPromos');
 const livrosSection = document.getElementById('livros-section');
 const promosSection = document.getElementById('promocoes-section');
+const promotionForm = document.getElementById('promotionForm');
 
 showLivrosBtn.addEventListener('click', () => {
     livrosSection.classList.remove('hidden');
@@ -30,6 +48,14 @@ const bookForm = document.getElementById('bookForm');
 const booksList = document.getElementById('booksList');
 const cancelBtn = document.getElementById('cancelBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const promotionDescription = document.getElementById('promotionDescription');
+const promotionDescriptionCount = document.getElementById('promotionDescriptionCount');
+
+if (promotionDescription) {
+    const limit = parseInt(promotionDescription.dataset.wordLimit, 10) || MAX_WORDS_DEFAULT;
+    promotionDescription.addEventListener('input', () => enforceWordLimit(promotionDescription, promotionDescriptionCount, limit));
+    enforceWordLimit(promotionDescription, promotionDescriptionCount, limit);
+}
 
 // Carregar livros da API
 async function loadBooks() {

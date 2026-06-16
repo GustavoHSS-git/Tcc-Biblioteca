@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     const userId = sessionStorage.getItem("userId");
     const steamCards = document.querySelector(".js-steamCards");
+    const searchInput = document.getElementById("wishlistSearchInput");
+    let wishlistItems = [];
 
     if (!userId) {
         window.location.href = "/Login/Login.html";
@@ -8,6 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     loadWishlist();
+
+    if (searchInput) {
+        searchInput.addEventListener("input", filterWishlist);
+    }
 
     async function loadWishlist() {
         try {
@@ -24,7 +30,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(result.message || "Erro ao carregar desejos");
             }
 
-            renderWishlist(result.data || []);
+            wishlistItems = result.data || [];
+            renderWishlist(wishlistItems);
         } catch (error) {
             steamCards.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #2e2e2e;">
@@ -34,6 +41,17 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             console.error("[Desejos] Erro:", error);
         }
+    }
+
+    function filterWishlist() {
+        const query = searchInput?.value.trim().toLowerCase() || '';
+        const filtered = wishlistItems.filter((item) => {
+            const relatedLivro = Array.isArray(item.livros) ? item.livros[0] : item.livros || {};
+            const title = (relatedLivro?.titulo || relatedLivro?.title || item.titulo || item.title || '').toString().toLowerCase();
+            const author = (relatedLivro?.autor || relatedLivro?.author || item.autor || item.author || '').toString().toLowerCase();
+            return title.includes(query) || author.includes(query);
+        });
+        renderWishlist(filtered);
     }
 
     function renderWishlist(items) {
@@ -104,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const result = await response.json();
             if (!result.success) {
-                throw new Error(result.message || "N�o foi poss�vel remover");
+                throw new Error(result.message || "Não foi possível remover");
             }
 
             const wrapper = button.closest(".d-steam-card-wrapper");

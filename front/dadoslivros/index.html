@@ -41,7 +41,7 @@
             <!-- COLUNA 1: CAPA -->
             <div class="book-cover-section">    
                 <div class="book-cover">
-                    <img src="/fotos/default-book.png" alt="Capa do livro" id="mainCover">
+                    <img src="https://placehold.co/320x480/eeeeee/777777?text=Capa+Indisponivel" alt="Capa do livro" id="mainCover">
                 </div>
             </div>
 
@@ -60,10 +60,12 @@
                     Buscando sinopse no banco de dados...
                 </p>
                 <button class="ver-mais-btn" id="verMaisBtnDados" style="display: none;">Ver mais</button>
+                <button class="translate-btn" id="translateBtnDados">Traduzir Sinopse</button>
 
                 <!-- AVALIAÇÃO DO USUÁRIO -->
                 <div class="user-rating-section">
                     <h3>Sua Avaliação</h3>
+                    <div class="rating-summary" id="ratingSummary">Carregando avaliações...</div>
                     <div class="rating-stars">
                         <span class="star" data-value="1">★</span>
                         <span class="star" data-value="2">★</span>
@@ -72,6 +74,9 @@
                         <span class="star" data-value="5">★</span>
                     </div>
                     <p id="rating-result">Clique nas estrelas para avaliar</p>
+                    <textarea id="ratingComment" rows="3" maxlength="1000" placeholder="Deixe um comentário opcional sobre o livro (max 1000 caracteres)"></textarea>
+                    <button id="submitRatingBtn" class="btn-save-bio">Enviar avaliação</button>
+                    <div class="review-list" id="reviewList"></div>
                 </div>
             </div>
 
@@ -83,7 +88,6 @@
                 </div>
 
                 <button class="btn-buy">Comprar Agora</button>
-                <button class="btn-read">Ler Amostra</button>
                  <button class="btn-wishlist" id="wishlistBtn">❤️ Adicionar aos Desejos</button>
                 <div class="book-details-box">
                     <h4>Informações</h4>
@@ -149,25 +153,5 @@
 
     <script src="/loja/navbar-auth.js"></script>
     <script src="/dadoslivros/dadoslivro.js"></script>
-    
-    <script>
-        const stars = document.querySelectorAll('.rating-stars .star');
-        const result = document.getElementById('rating-result');
-
-        stars.forEach(star => {
-            star.addEventListener('click', () => {
-                const value = star.getAttribute('data-value');
-
-                stars.forEach(s => s.classList.remove('selected'));
-                for (let i = 0; i < value; i++) {
-                    stars[i].classList.add('selected');
-                }
-
-                result.textContent = `Você avaliou com ${value} estrela${value > 1 ? 's' : ''}!`;
-            });
-        });
-
-        
-    </script>
 </body>
 </html>

@@ -2,7 +2,18 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const axios = require('axios');
+const { MercadoPagoConfig, Payment } = require('mercadopago');
 require('dotenv').config();
+
+const mpAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+if (!mpAccessToken) {
+  throw new Error('MERCADOPAGO_ACCESS_TOKEN não encontrado nas variáveis de ambiente. Crie um arquivo .env ou defina a variável de ambiente.');
+}
+
+const client = new MercadoPagoConfig({
+  accessToken: mpAccessToken
+});
+const payment = new Payment(client);
 
 // cliente do Supabase (conexão global)
 const supabase = require('./supabase');
@@ -25,7 +36,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(express.static(path.join(__dirname)));
 
 // Servir arquivos estáticos das subpastas
@@ -40,6 +52,22 @@ app.use('/admin', express.static(path.join(__dirname, 'front', 'admin')));
 app.use('/fotos', express.static(path.join(__dirname, 'front', 'fotos')));
 app.use('/perfil', express.static(path.join(__dirname, 'front', 'perfil')));
 app.use('/desejos', express.static(path.join(__dirname, 'front', 'desejos')));
+
+// ============================================
+//  ROTA DE CALLBACK PARA RECUPERAÇÃO DE SENHA
+// ============================================
+app.get('/reset-callback', (req, res) => {
+    // O Supabase envia token_hash e type como query parameters
+    const { token_hash, type } = req.query;
+    
+    if (!token_hash || type !== 'recovery') {
+        return res.status(400).send('Link inválido ou expirado.');
+    }
+    
+    // Redireciona para a página de login com o token_hash
+    // O token_hash será processado pelo JavaScript no cliente
+    res.redirect(`/front/Login/Login.html#access_token=${token_hash}&type=recovery`);
+});
 
 
 // GET /api/animes?q=nome
@@ -937,49 +965,6 @@ app.post('/api/register', async (req, res) => {
             success: false, 
             message: 'Erro ao cadastrar: ' + err.message 
         });
-    }
-});
-
-app.listen(PORT, () => {
-    console.log(`🥳 Servidor rodando em http://localhost:${PORT}`);
-    console.log(`🤠 Biblioteca Digital - Página inicial: Login`);
-});
-
-
-app.post('/api/vendas', async (req, res) => {
-    const { total, perfil_id, items } = req.body;
-
-    try {
-        // GERAR O PIX NO MERCADO PAGO
-        const mpResponse = await payment.create({
-            body: {
-                transaction_amount: Number(total),
-                description: 'Compra de Livro',
-                payment_method_id: 'pix',
-                payer: { email: 'cliente@exemplo.com' }
-            }
-        });
-
-        // SALVAR NO BANCO 
-        const { data, error } = await supabase
-            .from('vendas')
-            .insert([{ 
-                perfil_id: perfil_id, 
-                total: total 
-            }]);
-
-        if (error) throw error;
-
-        // DEVOLVER O QR CODE PARA O FRONTEND
-        res.json({
-            success: true,
-            qrCodeBase64: mpResponse.point_of_interaction.transaction_data.qr_code_base64,
-            qrCode: mpResponse.point_of_interaction.transaction_data.qr_code
-        });
-
-    } catch (error) {
-        console.error("Erro na operação:", error);
-        res.status(500).json({ success: false, message: error.message });
     }
 });
 

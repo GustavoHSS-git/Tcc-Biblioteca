@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitura - Livraria Digital</title>
+    <link rel="shortcut icon" href="/front/fotos/logo3.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/navbar.css">
+    <link rel="stylesheet" href="leitura.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dark-mode">
+
+    <header class="page-top">
+        <nav class="navbar">
+            <div class="container nav-container">
+                <div class="nav-left">
+                    <a href="/inicial/i.html" class="brand">
+                        <img src="/fotos/logo.png" alt="Logo Biblioteca" class="brand-img" />
+                    </a>
+                    <ul class="nav-links">
+                        <li><a href="/inicial/i.html" class="nav-link">Início</a></li>
+                        <li><a href="/loja/catalogo.html" class="nav-link">Loja</a></li>
+                        <li><a href="/biblioteca/bibliotecaindex.html" class="nav-link">Biblioteca</a></li>
+                        <li><a href="/desejos/desejos.html" class="nav-link">Desejos</a></li>
+                        <li><a href="/perfil/perfil.html" class="nav-link">Perfil</a></li>
+                    </ul>
+                </div>
+                <div class="nav-right">
+                    <button id="logoutBtn" class="logout-btn">Sair</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="reader-container">
+        <div class="reader-toolbar">
+            <div class="toolbar-left">
+                <button class="btn-back" id="btnBack">← Voltar</button>
+                <span class="book-title" id="bookTitle">Carregando...</span>
+            </div>
+            <div class="toolbar-center">
+                <span class="page-info" id="pageInfo">Página 1 de 1</span>
+            </div>
+            <div class="nav-right">
+                    <button class="btn-fullscreen" id="btnFullscreen">⛶</button>
+                </div>
+            <div class="toolbar-right">
+                <button class="btn-settings" id="btnSettings">⚙️</button>
+            </div>
+        </div>
+
+        <div class="reader-content">
+            <div class="reader-nav reader-nav-left" id="btnPrevPage">
+                <button class="btn-nav">‹</button>
+            </div>
+
+            <div class="reader-display" id="readerDisplay">
+                <div class="page-container">
+                    <img id="pageImage" src="" alt="Página do livro" class="page-image">
+                </div>
+            </div>
+
+            <div class="reader-nav reader-nav-right" id="btnNextPage">
+                <button class="btn-nav">›</button>
+            </div>
+        </div>
+
+        <div class="reader-controls">
+            <div class="controls-left">
+                <button class="btn-control" id="btnBookmark">🔖</button>
+            </div>
+            <div class="controls-center">
+                <input type="range" id="pageSlider" class="page-slider" min="1" value="1">
+            </div>
+            <div class="controls-right"></div>
+        </div>
+    </main>
+
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-content">
+            <h3>Configurações de Leitura</h3>
+            <div class="setting-group">
+                <label>Brilho</label>
+                <input type="range" id="brightness" min="50" max="150" value="100" class="slider">
+            </div>
+            <div class="setting-group">
+                <label>Cor do Fundo</label>
+                <div class="color-options">
+                    <button class="color-btn" id="colorWhite" title="Branco" style="background-color: #ffffff;" data-color="#ffffff"></button>
+                    <button class="color-btn" id="colorCream" title="Creme" style="background-color: #fffdd0;" data-color="#fffdd0"></button>
+                    <button class="color-btn" id="colorBeige" title="Bege" style="background-color: #f5e6d3;" data-color="#f5e6d3"></button>
+                    <button class="color-btn" id="colorGray" title="Cinza Claro" style="background-color: #f0f0f0;" data-color="#f0f0f0"></button>
+                    <button class="color-btn" id="colorDark" title="Modo Noturno" style="background-color: #2c2c2c;" data-color="#2c2c2c"></button>
+                </div>
+            </div>
+            <button class="btn-close-settings" id="btnCloseSettings">Fechar</button>
+        </div>
+    </div>
+
+    <script src="/leitura/leitura.js"></script>
+</body>
+</html>

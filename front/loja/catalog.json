@@ -7,7 +7,7 @@
     "isbn": "g-1",
     "publishedDate": null,
     "pageCount": 0,
-    "price": 39.9,
+    "price": 1,
     "category": "livro"
   },
   {
@@ -262,5 +262,22 @@
     "pageCount": 0,
     "price": 24.9,
     "category": "livro"
+  },
+  {
+    "title": "Dragon Ball",
+    "author": "Akira Toriyama",
+    "description": "Dragon Ball Super acompanha as consequências da feroz batalha de Goku contra Majin Buu, enquanto ele tenta manter a frágil paz na Terra.",
+    "cover": "/fotos/0.png",
+    "images": [
+      "/fotos/1.png",
+      "/fotos/2.webp",
+      "/fotos/3.png"
+    ],
+    "sampleText": "A primeira página mostra a chegada de Goku e o início de uma aventura cheia de ação, amizade e luta pelo poder.",
+    "isbn": "g-99",
+    "publishedDate": null,
+    "pageCount": 31,
+    "price": 49.9,
+    "category": "manga"
   }
 ]

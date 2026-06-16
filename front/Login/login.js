@@ -125,30 +125,50 @@ document.addEventListener('DOMContentLoaded', () => {
 const _supabase = supabase.createClient('https://felvojelnhthbrxhsgxj.supabase.co', 'sb_publishable_2PnMmf5jBHPHJ2xQkQFjIw_LVAEmr3f');
 
 window.onload = async () => {
+    // Aguarda um pouco para o Supabase processar o token_hash da URL
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // 1. Verifica se existe uma sessão (o link de e-mail cria uma automaticamente)
     const { data: { session } } = await _supabase.auth.getSession();
 
     // Se o usuário veio pelo link de recuperação, a sessão existirá
     if (session) {
         // Esconde o form de login normal e mostra o de redefinir
-        document.getElementById('forgotPasswordForm').style.display = 'none'; // ou o seu ID de form
-        document.getElementById('resetPasswordSection').style.display = 'block';
+        const loginContainer = document.querySelector('.sign-in-container');
+        const resetSection = document.getElementById('resetPasswordSection');
+        if (loginContainer) loginContainer.style.display = 'none';
+        if (resetSection) resetSection.style.display = 'block';
     }
 };
 
 // 2. Função para salvar a nova senha
-document.getElementById('btnUpdatePassword').addEventListener('click', async () => {
-    const newPassword = document.getElementById('newPassword').value;
+const btnUpdate = document.getElementById('btnUpdatePassword');
+if (btnUpdate) {
+    btnUpdate.addEventListener('click', async () => {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword')?.value;
 
-    const { error } = await _supabase.auth.updateUser({
-        password: newPassword
+        // Validações
+        if (!newPassword || newPassword.length < 6) {
+            alert("A senha deve ter pelo menos 6 caracteres.");
+            return;
+        }
+
+        if (confirmPassword && newPassword !== confirmPassword) {
+            alert("As senhas não conferem.");
+            return;
+        }
+
+        const { error } = await _supabase.auth.updateUser({
+            password: newPassword
+        });
+
+        if (error) {
+            alert("Erro ao atualizar: " + error.message);
+        } else {
+            alert("Senha alterada com sucesso! Faça login com sua nova senha.");
+            await _supabase.auth.signOut();
+            window.location.href = '/front/Login/Login.html';
+        }
     });
-
-    if (error) {
-        alert("Erro ao atualizar: " + error.message);
-    } else {
-        alert("Senha alterada! Agora você pode entrar.");
-        await _supabase.auth.signOut(); // Desloga para ele entrar com a senha nova
-        window.location.href = 'Login.html'; 
-    }
-});
+}

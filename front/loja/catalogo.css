@@ -1006,6 +1006,23 @@ body {
     .close-modal {
         font-size: 1.5rem;
     }
+
+    /* Ajustes na navbar para telas muito pequenas */
+    .nav-left .brand-img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .nav-links {
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-links a {
+        padding: 8px 10px;
+        white-space: nowrap;
+    }
 }
 
 .saber-mais-btn {
@@ -1252,4 +1269,25 @@ body {
   margin: 5px;
   padding: 8px;
   cursor: pointer;
+}
+
+/* Garante que o título ocupe sempre o mesmo espaço e não quebre o layout */
+.book-title {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    white-space: nowrap;      /* Força o texto a ficar em uma linha só */
+    overflow: hidden;         /* Esconde o que passar do limite do card */
+    text-overflow: ellipsis;  /* Garante os três pontinhos (...) caso o JS falhe */
+}
+
+/* Deixa os autores organizados abaixo do título */
+.book-author {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;    /* Permite no máximo 2 linhas para os autores antes de cortar */
+    -webkit-box-orient: vertical;
 }

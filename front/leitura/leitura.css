@@ -183,8 +183,8 @@ body {
 }
 
 .reader-toolbar .book-title {
-    font-weight: 700; color: var(--text-dark); font-size: 1rem; max-width: 260px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 700; color: var(--text-dark); font-size: 1rem;
+    overflow: hidden; white-space: nowrap;
 }
 
 /* display com fundo sutil e borda arredondada */
@@ -245,3 +245,45 @@ body {
 /* Melhorias de acessibilidade/visibilidade */
 .reader-toolbar .book-title { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reader-nav[role="button"] { outline: none; }
+
+/* Ajusta a caixinha do botão e do título */
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1; 
+    min-width: max-content; 
+}
+
+/* Força o título a ficar na mesma linha sem cortar */
+.book-title {
+    font-size: 1.1rem;      
+    white-space: nowrap;    /* Mantém tudo na mesma linha */
+    font-weight: 600;
+}
+
+/* Força a caixinha da esquerda a ter espaço suficiente */
+.toolbar-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    flex: 1 !important;
+    min-width: max-content !important;
+}
+
+/* Força o título a ignorar os limites antigos e ficar na mesma linha */
+.book-title {
+    font-size: 1.1rem !important;      
+    white-space: nowrap !important; /* Obriga a ficar na mesma linha */
+    font-weight: 600 !important;
+    max-width: none !important;     /* Remove o limite de 260px/320px antigo */
+    text-overflow: clip !important; /* Remove qualquer corte de texto */
+}
+
+@media (max-width: 480px) {
+    .book-title {
+        font-size: 0.9rem !important; /* Diminui a letra no celular para caber */
+        max-width: 150px !important;  /* Limita o tamanho só em telas pequenas */
+        text-overflow: ellipsis !important; /* No celular ele põe os ... se não couber */
+    }
+}

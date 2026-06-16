@@ -328,6 +328,22 @@ router.put('/perfil/:id', async (req, res) => {
 // ============================================
 //  AVALIAÇÕES (Supabase)
 // ============================================
+// GET /api/avaliacoes/user/:id - Listar todas as avaliações de um usuário específico
+router.get('/avaliacoes/user/:id', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('avaliacoes')
+            .select('*, livros(*)')
+            .eq('perfil_id', req.params.id);
+
+        if (error) throw error;
+
+        res.json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erro ao buscar avaliações do usuário", details: error.message });
+    }
+});
+
 router.get('/avaliacoes/:livro_id', async (req, res) => {
     try {
         const { data, error } = await supabase.from('avaliacoes').select('*, perfil(nome, foto_perfil)').eq('livro_id', req.params.livro_id);
@@ -346,6 +362,33 @@ router.post('/avaliacoes', async (req, res) => {
         res.json({ success: true, data });
     } catch (error) {
         res.status(500).json({ success: false, message: "Erro ao criar avaliação" });
+    }
+});
+
+router.delete('/avaliacoes/:id', async (req, res) => {
+    try {
+        const reviewId = req.params.id;
+        const { data: existing, error: existingError } = await supabase.from('avaliacoes').select('id').eq('id', reviewId).maybeSingle();
+        if (existingError) throw existingError;
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Avaliação não encontrada' });
+        }
+
+        // Tenta soft delete se a coluna ativo existir. Caso contrário, remove o registro.
+        const { data, error } = await supabase.from('avaliacoes').update({ ativo: false }).eq('id', reviewId);
+        if (error) {
+            const deleteResult = await supabase.from('avaliacoes').delete().eq('id', reviewId);
+            if (deleteResult.error) throw deleteResult.error;
+            return res.json({ success: true, message: 'Comentário inativado com sucesso.' });
+        }
+
+        if (!data || (Array.isArray(data) && data.length === 0)) {
+            return res.status(500).json({ success: false, message: 'Não foi possível inativar a avaliação.' });
+        }
+
+        res.json({ success: true, message: 'Comentário inativado com sucesso.', data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Erro ao inativar avaliação', details: error.message || null });
     }
 });
 

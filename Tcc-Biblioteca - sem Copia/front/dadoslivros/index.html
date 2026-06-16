@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Livro - Biblioteca Digital</title>
+    <link rel="shortcut icon" href="/front/fotos/logo3.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/navbar.css">
+    <link rel="stylesheet" href="/dadoslivros/dadoslivro.css">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <header class="page-top">
+        <nav class="navbar">
+            <div class="container nav-container">
+                <div class="nav-left">
+                    <a href="/inicial/i.html" class="brand">
+                        <img src="/fotos/logo.png" alt="Logo Biblioteca" class="brand-img"> 
+                    </a>
+                    <ul class="nav-links">
+                        <li><a href="/inicial/i.html" class="nav-link">Início</a></li>
+                        <li><a href="/loja/catalogo.html" class="nav-link">Loja</a></li>
+                        <li><a href="/biblioteca/bibliotecaindex.html" class="nav-link">Biblioteca</a></li>
+                        <li><a href="/desejos/desejos.html" class="nav-link">Desejos</a></li>
+                        <li><a href="/perfil/perfil.html" class="nav-link">Perfil</a></li>
+                    </ul>
+                </div>
+                <div class="nav-right" style="display: flex; gap: 15px; align-items: center;">
+                    <button class="cart-btn" id="cartBtn">
+                        Carrinho (<span id="cartCount">0</span>)
+                    </button>
+                    <button id="logoutBtn" class="logout-btn">Sair</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="book-details-page">
+        <div class="book-details-container">
+            <!-- COLUNA 1: CAPA -->
+            <div class="book-cover-section">    
+                <div class="book-cover">
+                    <img src="/fotos/default-book.png" alt="Capa do livro" id="mainCover">
+                </div>
+            </div>
+
+            <!-- COLUNA 2: INFORMAÇÕES -->
+            <div class="book-info-section">
+                <h1 class="book-title">Carregando livro...</h1>
+                
+                <div class="book-meta">
+                    <span class="author">por <strong>Aguarde</strong></span>
+                    <span class="category">—</span>
+                </div>
+                
+                
+                <!-- DESCRIÇÃO -->
+                <p class="book-description">
+                    Buscando sinopse no banco de dados...
+                </p>
+                <button class="ver-mais-btn" id="verMaisBtnDados" style="display: none;">Ver mais</button>
+
+                <!-- AVALIAÇÃO DO USUÁRIO -->
+                <div class="user-rating-section">
+                    <h3>Sua Avaliação</h3>
+                    <div class="rating-stars">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                    <p id="rating-result">Clique nas estrelas para avaliar</p>
+                </div>
+            </div>
+
+            <!-- COLUNA 3: COMPRA -->
+            <div class="book-purchase-section">
+                <div class="price-box">
+                    <p class="price-label">Preço</p>
+                    <p class="price-amount"></p>
+                </div>
+
+                <button class="btn-buy">Comprar Agora</button>
+                <button class="btn-read">Ler Amostra</button>
+                 <button class="btn-wishlist" id="wishlistBtn">❤️ Adicionar aos Desejos</button>
+                <div class="book-details-box">
+                    <h4>Informações</h4>
+                    <ul class="details-list">
+                        <li><strong>Autor:</strong></li>
+                        <li><strong>Editora:</strong></li>
+                        <li><strong>Gênero:</strong></li>
+                        <li><strong>Páginas:</strong></li>
+                        <li><strong>ISBN:</strong></li>
+                    </ul>
+                </div>
+
+                <div class="author-bio-box">
+                    <h4>Sobre o Autor</h4>
+                    <p></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RELACIONADOS -->
+        <div class="related-books-section">
+            <h2>Livros Relacionados</h2>
+            <div class="related-books-grid">
+                <div class="related-book-card">
+                    <img src="" alt="">
+                    <h4></h4>
+                    <p class="author-small"></p>
+                    <span class="price-small"></span>
+                </div>
+                <div class="related-book-card">
+                    <img src="" alt="">
+                    <h4></h4>
+                    <p class="author-small"></p>
+                    <span class="price-small"></span>
+                </div>
+                <div class="related-book-card">
+                    <img src="" alt="">
+                    <h4></h4>
+                    <p class="author-small"></p>
+                    <span class="price-small"></span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DO CARRINHO -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-modal-content">
+            <button class="close-btn" id="closeCart">&times;</button>
+            <h2>Seu Carrinho</h2>
+            <div class="cart-items" id="cartItems">
+                <p class="empty-cart">Carrinho vazio</p>
+            </div>
+            <div class="cart-summary">
+                <div class="cart-total">
+                    <strong>Total:</strong>
+                    <span id="cartTotal">R$ 0,00</span>
+                </div>
+                <button class="checkout-btn" id="checkoutBtn">Ir para Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/loja/navbar-auth.js"></script>
+    <script src="/dadoslivros/dadoslivro.js"></script>
+    
+    <script>
+        const stars = document.querySelectorAll('.rating-stars .star');
+        const result = document.getElementById('rating-result');
+
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const value = star.getAttribute('data-value');
+
+                stars.forEach(s => s.classList.remove('selected'));
+                for (let i = 0; i < value; i++) {
+                    stars[i].classList.add('selected');
+                }
+
+                result.textContent = `Você avaliou com ${value} estrela${value > 1 ? 's' : ''}!`;
+            });
+        });
+
+        
+    </script>
+</body>
+</html>

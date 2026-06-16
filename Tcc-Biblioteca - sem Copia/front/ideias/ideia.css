@@ -1,0 +1,684 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #00d2ff;
+    --secondary-color: #3a7bd5;
+    --accent-gold: #ffd700;
+    --bg-dark: #0a0d14;
+    --bg-mid: #0f1218;
+    --card-bg: #141820;
+    --card-raised: #1a1f2e;
+    --text-primary: #f0f2f5;
+    --text-secondary: #7a8499;
+    --text-muted: #4a5168;
+    --border-color: rgba(255, 255, 255, 0.07);
+    --border-active: rgba(0, 210, 255, 0.35);
+    --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+    --gold-gradient: linear-gradient(135deg, #ffd700 0%, #ffb800 100%);
+    --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 40px rgba(0, 210, 255, 0.08);
+    --shadow-book: 0 8px 32px rgba(0, 0, 0, 0.6);
+    --book-spine: 6px;
+    --radius-card: 14px;
+    --radius-book: 6px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ──────────────────────────────────────────
+   CORREÇÃO NAVBAR TEMA ESCURO
+─────────────────────────────────────────── */
+.navbar {
+    background: var(--card-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.navbar .nav-links a {
+    color: var(--text-primary) !important;
+}
+
+.navbar .nav-links a:hover,
+.navbar .nav-links a.active {
+    background: rgba(0, 210, 255, 0.1) !important;
+    color: var(--primary-color) !important;
+}
+
+.navbar .brand-icon {
+    filter: brightness(0) invert(1);
+}
+
+/* ──────────────────────────────────────────
+   BACKGROUND ATMOSPHERE
+─────────────────────────────────────────── */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(0, 210, 255, 0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 80% 80%, rgba(58, 123, 213, 0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ──────────────────────────────────────────
+   LAYOUT PRINCIPAL
+─────────────────────────────────────────── */
+.main-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 120px 2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+/* ──────────────────────────────────────────
+   PROFILE CARD (TOPO)
+─────────────────────────────────────────── */
+.profile-page-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-card);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-soft), var(--shadow-glow);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-page-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-gradient);
+    opacity: 0.7;
+}
+
+/* AVATAR */
+.profile-avatar-container {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    padding: 3px;
+    background: var(--accent-gradient);
+    flex-shrink: 0;
+}
+
+.profile-avatar-container > * {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    background: var(--card-raised);
+}
+
+/* INFO */
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.profile-username {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.profile-bio {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 300;
+    line-height: 1.6;
+    max-width: 480px;
+}
+
+/* STATS */
+.profile-stats {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    min-width: 90px;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.stat-item:hover {
+    border-color: var(--border-active);
+    transform: translateY(-2px);
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 0.3rem;
+    font-weight: 500;
+}
+
+/* ──────────────────────────────────────────
+   SECTION HEADERS
+─────────────────────────────────────────── */
+.section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+.section-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    padding: 0.15rem 0.6rem;
+    background: var(--border-color);
+    border-radius: 20px;
+}
+
+.section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+/* ──────────────────────────────────────────
+   SEÇÕES
+─────────────────────────────────────────── */
+.content-sections {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+}
+
+.section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-card);
+    padding: 2rem;
+    box-shadow: var(--shadow-soft);
+}
+
+/* ──────────────────────────────────────────
+   BOOK SHELF — GRID PRINCIPAL
+─────────────────────────────────────────── */
+.books-shelf {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ──────────────────────────────────────────
+   BOOK CARD — VISUAL DE LIVRO 3D
+─────────────────────────────────────────── */
+.book-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.book-card:hover {
+    transform: translateY(-8px);
+}
+
+.book-cover-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: var(--radius-book);
+    box-shadow:
+        var(--shadow-book),
+        inset -3px 0 8px rgba(0,0,0,0.4);
+}
+
+/* Efeito de lombada do livro */
+.book-cover-wrapper::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: var(--book-spine);
+    background: linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.1));
+    border-radius: var(--radius-book) 0 0 var(--radius-book);
+    z-index: 2;
+}
+
+/* Brilho na capa */
+.book-cover-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-book);
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.book-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-book);
+    display: block;
+}
+
+/* Placeholder quando sem capa */
+.book-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-book);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--card-raised), var(--bg-dark));
+    border: 1px solid var(--border-color);
+    font-size: 2rem;
+    color: var(--text-muted);
+}
+
+/* RATING BADGE sobre a capa */
+.book-rating-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(10, 13, 20, 0.85);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent-gold);
+}
+
+.book-rating-badge .star {
+    font-size: 0.65rem;
+}
+
+/* Status badge */
+.book-status-badge {
+    position: absolute;
+    bottom: 8px;
+    left: calc(var(--book-spine) + 6px);
+    right: 8px;
+    z-index: 3;
+    text-align: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: rgba(10, 13, 20, 0.8);
+    backdrop-filter: blur(6px);
+}
+
+.book-status-badge.reading   { color: #00d2ff; border: 1px solid rgba(0,210,255,0.3); }
+.book-status-badge.completed { color: #4caf7d; border: 1px solid rgba(76,175,125,0.3); }
+.book-status-badge.wishlist  { color: var(--accent-gold); border: 1px solid rgba(255,215,0,0.3); }
+.book-status-badge.dropped   { color: #e05c5c; border: 1px solid rgba(224,92,92,0.3); }
+
+/* INFO abaixo da capa */
+.book-info {
+    padding: 0 2px;
+}
+
+.book-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.book-author {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* STAR RATING */
+.book-stars {
+    display: flex;
+    gap: 2px;
+    margin-top: 0.35rem;
+}
+
+.book-stars .star {
+    font-size: 0.65rem;
+    color: var(--accent-gold);
+    opacity: 0.3;
+}
+
+.book-stars .star.filled {
+    opacity: 1;
+}
+
+/* ──────────────────────────────────────────
+   PRATELEIRA HORIZONTAL (variante)
+─────────────────────────────────────────── */
+.books-shelf-horizontal {
+    display: flex;
+    gap: 1.25rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-active) transparent;
+}
+
+.books-shelf-horizontal::-webkit-scrollbar {
+    height: 4px;
+}
+
+.books-shelf-horizontal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.books-shelf-horizontal::-webkit-scrollbar-thumb {
+    background: var(--border-active);
+    border-radius: 2px;
+}
+
+.books-shelf-horizontal .book-card {
+    flex-shrink: 0;
+    width: 110px;
+}
+
+/* ──────────────────────────────────────────
+   LISTA (variante para sidebar)
+─────────────────────────────────────────── */
+.books-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.book-list-item {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 10px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+}
+
+.book-list-item:hover {
+    border-color: var(--border-active);
+    transform: translateX(4px);
+}
+
+.book-list-cover {
+    width: 44px;
+    height: 64px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.book-list-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.book-list-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.book-list-author {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+}
+
+.book-list-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.book-list-rating {
+    font-size: 0.68rem;
+    color: var(--accent-gold);
+    font-weight: 600;
+}
+
+/* ──────────────────────────────────────────
+   PROGRESS BAR (livro em leitura)
+─────────────────────────────────────────── */
+.book-progress {
+    margin-top: 0.5rem;
+}
+
+.book-progress-bar {
+    height: 3px;
+    background: var(--border-color);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.book-progress-fill {
+    height: 100%;
+    background: var(--accent-gradient);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+
+.book-progress-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* ──────────────────────────────────────────
+   FILTROS / TABS
+─────────────────────────────────────────── */
+.shelf-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.shelf-tab {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Outfit', sans-serif;
+}
+
+.shelf-tab:hover {
+    border-color: var(--border-active);
+    color: var(--primary-color);
+}
+
+.shelf-tab.active {
+    background: var(--accent-gradient);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ──────────────────────────────────────────
+   EMPTY STATE
+─────────────────────────────────────────── */
+.shelf-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+}
+
+.shelf-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+}
+
+.shelf-empty-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* ──────────────────────────────────────────
+   ANIMAÇÕES
+─────────────────────────────────────────── */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.book-card {
+    animation: fadeUp 0.4s ease both;
+}
+
+.book-card:nth-child(1)  { animation-delay: 0.05s; }
+.book-card:nth-child(2)  { animation-delay: 0.10s; }
+.book-card:nth-child(3)  { animation-delay: 0.15s; }
+.book-card:nth-child(4)  { animation-delay: 0.20s; }
+.book-card:nth-child(5)  { animation-delay: 0.25s; }
+.book-card:nth-child(6)  { animation-delay: 0.30s; }
+.book-card:nth-child(7)  { animation-delay: 0.35s; }
+.book-card:nth-child(8)  { animation-delay: 0.40s; }
+
+/* ──────────────────────────────────────────
+   RESPONSIVO
+─────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .content-sections {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 90px 1rem 3rem;
+        gap: 1.5rem;
+    }
+
+    .profile-page-card {
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .profile-stats {
+        grid-column: 1 / -1;
+        justify-content: space-around;
+    }
+
+    .stat-item {
+        padding: 0.75rem 1rem;
+        min-width: 70px;
+    }
+
+    .books-shelf {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 1rem;
+    }
+
+    .profile-username {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-page-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .profile-avatar-container {
+        margin: 0 auto;
+    }
+
+    .profile-bio {
+        max-width: 100%;
+    }
+
+    .books-shelf {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

@@ -5,15 +5,13 @@
 
 
 body {
-	height: 100vh; /* Força a altura da tela */
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center; /* Centraliza verticalmente o conteúdo */
 	background: 
-    linear-gradient(135deg, #3a7bd5e6, #007385); 
-	overflow: hidden; /* Esconde as barras de rolagem */
+	linear-gradient(135deg, #3a7bd5e6, #007385); 
 	margin: 0;
 	padding: 90px 0 20px; /* Espaço superior para navbar fixa + respiro */
 }
@@ -22,7 +20,6 @@ body {
 	max-width: 1220px;
 	margin: 0 auto;
 	padding: 0 20px;
-	height: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -569,3 +566,14 @@ html, body {
 	}
 }
 
+.member-name {
+    font-size: 1.8rem !important;
+    line-height: 1.4 !important;
+    font-weight: 700;
+    
+    /* Força o texto a ficar em uma linha só e coloca os ... se passar do limite */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+}

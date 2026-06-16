@@ -1,0 +1,293 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap');
+body {
+    font-family: 'Inter', 'Nunito Sans', sans-serif;
+    margin: 0;
+    padding: 0;
+    padding-top: 65px; 
+    background: linear-gradient(135deg, #3a7bd5e6, #007385);
+    min-height: 100vh;
+} 
+
+
+/* ------------------- PESQUISA ------------------- */
+
+.search-area {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.search-area input {
+    width: 350px;
+    padding: 12px 18px;
+    border-radius: 25px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.search-area input:focus {
+    box-shadow: 0 0 8px rgba(240, 234, 62, 0.5);
+}
+
+
+
+/* ------------------- CARDS ------------------- */
+* { margin: 0; padding: 0 ; box-sizing: border-box; }
+
+/* Grade automática de cards: colunas fixas (responsivas) */
+.d-steam-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 230px)); /* colunas fixas de 180px que se quebram automaticamente */
+  justify-content: center; /* centraliza o bloco d  e grid na página */
+  gap: 2rem; /* espaço entre cards */
+  padding: 1rem; /* evita cortes nas bordas */
+}
+
+/* Cada wrapper ocupa totalmente a célula da grade */
+.d-steam-card-wrapper {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@media only screen and (max-width: 1200px) {
+  .d-steam-cards { grid-template-columns: repeat(auto-fill, minmax(150px, 150px)); }
+}
+
+@media only screen and (max-width: 768px) {
+  .d-steam-cards { grid-template-columns: repeat(auto-fill, minmax(120px, 120px)); }
+}
+
+/* ============================================
+   RESPONSIVO - BREAKPOINTS COMPLETOS
+   ============================================ */
+
+/* TABLET GRANDE (1024px e menores) */
+@media only screen and (max-width: 1024px) {
+  body {
+    padding-top: 60px;
+  }
+
+  .search-area {
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+
+  .search-area input {
+    width: 300px;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .d-steam-cards {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 200px));
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+
+  .d-steam-card {
+    padding: 0 0 150% 0;
+  }
+}
+
+/* TABLET PEQUENO / MOBILE GRANDE (768px e menores) */
+@media only screen and (max-width: 768px) {
+  body {
+    padding-top: 55px;
+  }
+
+  .search-area {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding: 0 15px;
+  }
+
+  .search-area input {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+
+  .d-steam-cards {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 140px));
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+
+  .d-steam-card {
+    padding: 0 0 150% 0;
+  }
+
+  .d-steam-card:hover,
+  .d-steam-card:focus {
+    transform: perspective(222px) translate3d(0px, 0px, 4px) rotateX(2deg);
+  }
+}
+
+/* MOBILE PEQUENO (480px e menores) */
+@media only screen and (max-width: 480px) {
+  body {
+    padding-top: 50px;
+  }
+
+  .search-area {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 0 10px;
+  }
+
+  .search-area input {
+    width: 100%;
+    max-width: 280px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .d-steam-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 0.5rem;
+  }
+
+  .d-steam-card {
+    padding: 0 0 150% 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  }
+
+  .d-steam-card:hover,
+  .d-steam-card:focus {
+    transform: perspective(222px) translate3d(0px, 0px, 2px) rotateX(1deg);
+    box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.5);
+  }
+
+  .b-game-card {
+    perspective: 500px;
+  }
+
+  .b-game-card:hover .b-game-card__cover {
+    transform: rotateX(5deg) translateY(-4px);
+  }
+}
+
+/* EXTRA PEQUENO (Abaixo de 360px) */
+@media only screen and (max-width: 360px) {
+  body {
+    padding-top: 45px;
+  }
+
+  .search-area {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding: 0 8px;
+  }
+
+  .search-area input {
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .d-steam-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .d-steam-card {
+    padding: 0 0 150% 0;
+  }
+
+  .d-steam-card::before {
+    opacity: 0.3;
+  }
+
+  .d-steam-card:hover::before {
+    opacity: 0.6;
+  }
+}
+
+.d-steam-card {
+  padding: 0 0 150% 0; /* Use padding 'trick' to create a ratio for the cards */
+  background: url('') no-repeat transparent 50% 50%;
+  background-size: cover;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 10px -2px rgba(0, 0, 0, 0.5);
+  transition: all 0.28s ease 0.01s;
+  transform: perspective(222px) translate3d(0px, 5px, 0px) rotateX(0deg);
+  perspective-origin: top;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.d-steam-card::before {
+  width: 100%;
+  height: 172%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  content: "";
+  background-image: linear-gradient(35deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.07) 51.5%, rgba(255, 255, 255, 0.15) 54%, rgba(255, 255, 255, 0.15) 100%);
+  transform: translateY(-36%);
+  opacity: 0.5;
+  transition: all 0.28s ease 0.01s;
+}
+
+.d-steam-card:hover,
+.d-steam-card:focus {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transform: perspective(222px) translate3d(0px, 0px, 8px) rotateX(3deg);
+  transform-origin: center;
+  box-shadow: 0 14px 16px -2px rgba(0, 0, 0, 0.5);
+}
+
+.d-steam-card:hover::before,
+.d-steam-card:focus::before {
+  opacity: 1;
+  transform: translateY(-20%);
+}
+
+.d-steam-card:active { filter: brightness(80%) contrast(110%); }
+
+/* aninhamento expandido: */
+.b-game-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding-bottom: 150%;
+  perspective: 1000px;
+}
+
+.b-game-card__cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-image: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+  background-size: cover;
+  transform-style: preserve-3d;
+  transition: transform .35s ease-in-out;
+}
+
+.b-game-card:hover .b-game-card__cover {
+  transform: rotateX(7deg) translateY(-6px);
+}
+
+.b-game-card::before {
+  content: "";
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  width: 90%;
+  height: 90%;
+  background: rgba(0,0,0,0.5);
+  box-shadow: 0 6px 12px 12px rgba(0,0,0,0.4);
+}

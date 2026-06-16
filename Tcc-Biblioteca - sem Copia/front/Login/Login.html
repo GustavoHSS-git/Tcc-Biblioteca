@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso - Livraria Digital</title>
+    <link rel="shortcut icon" href="/front/fotos/logo3.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/Login/login.css">
+
+
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="form-container sign-up-container">
+            <form id="registerForm">
+                <img src="../fotos/logo3p.png" alt="Logo" class="form-logo" />
+                <h1>Criar Conta</h1>
+                <div class="social-container">
+                </div>
+                <span>Preencha seus dados para cadastro</span>
+                <input type="text" id="regNome" placeholder="Nome Completo" required />
+                <input type="email" id="regEmail" placeholder="Email" required />
+                <div class="password-container">
+                    <input type="password" id="regPassword" placeholder="Senha (mínimo 6 caracteres)" required />
+                    <button type="button" class="toggle-password" data-target="regPassword">👁️</button>
+                </div>
+                <button type="submit" class="btn-primary">Cadastrar</button>
+            </form>
+        </div>
+
+        <div class="form-container sign-in-container">
+    <form id="loginForm">
+        <img src="../fotos/logo3p.png" alt="Logo" class="form-logo" />
+        
+        <h1>Login</h1>
+        <div class="social-container"></div>
+        <span>Entre com seu email e senha</span>
+        
+        <input type="email" id="email" placeholder="Email" required />
+        <div class="password-container">
+            <input type="password" id="password" placeholder="Senha" required />
+            <button type="button" class="toggle-password" data-target="password">👁️</button>
+        </div>
+        
+        <button type="submit" class="btn-primary">Entrar</button>
+        <a href="/front/esqueciasenha/esqueci.html" class="forgot">Esqueceu sua senha?</a>
+    </form>
+</div>
+
+      
+<div id="resetPasswordSection" style="display: none;">
+    <h1>Crie uma nova senha</h1>
+    <input type="password" id="newPassword" placeholder="Nova senha" />
+    <button id="btnUpdatePassword">Salvar Nova Senha</button>
+</div>
+
+
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1>Bem-vindo de volta!</h1>
+                    <p>Para se manter conectado, por favor faça o login.</p>
+                    <button class="ghost" id="signIn">JÁ TENHO CONTA</button>
+                </div>
+
+                <div class="overlay-panel overlay-right">
+                    <h1>Olá Leitor!</h1>
+                    <p>faça login e comece sua jornada na nossa Livraria Digital</p>
+                    <button class="ghost" id="signUp">QUERO ME CADASTRAR</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- NOTIFICAÇÃO FLUTUANTE -->
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/Login/login.js"></script>
+</body>
+</html>

@@ -966,6 +966,10 @@ checkoutBtn.addEventListener("click", async () => {
             showNotification(`Compra de R$ ${total.toFixed(2)} finalizada com sucesso!`, "success");
             cart.clear();
             cartModal.classList.remove("active");
+            const userId = sessionStorage.getItem('userId');
+            if (userId) {
+                window.location.href = '/biblioteca/bibliotecaindex.html';
+            }
         } else {
             showNotification('Não foi possivel realizar compra (Erro ao registrar compra no banco de dados.)', "error");
         }
@@ -1095,6 +1099,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Carregar promoções e aplicar
             const promotions = await loadPromotions();
             books = applyPromotionsToBooks(books, promotions);
+            // Forçar preço em R$1 para todos os livros
+            books.forEach(b => {
+                try {
+                    b.price = 1;
+                    b.preco = 1;
+                    if (b.originalPrice) b.originalPrice = 1;
+                } catch (e) { /* safe */ }
+            });
             filteredBooks = [...books];
             updateBookMangaCounters();
             currentPage = 1;

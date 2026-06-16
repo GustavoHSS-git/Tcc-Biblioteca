@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+require('dotenv').config();
 
 const { MercadoPagoConfig, Payment } = require("mercadopago");
 
@@ -9,8 +10,13 @@ app.use(cors());
 app.use(express.json());
 
 // CONFIGURAÇÃO
+const mpAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+if (!mpAccessToken) {
+  throw new Error('MERCADOPAGO_ACCESS_TOKEN não encontrado nas variáveis de ambiente. Crie um arquivo .env ou defina a variável de ambiente.');
+}
+
 const client = new MercadoPagoConfig({
-  accessToken: "TEST-2506783482072783-122110-babf5a52b54750334e4f3034271b17a9-583771665"
+  accessToken: mpAccessToken
 });
 
 const payment = new Payment(client);

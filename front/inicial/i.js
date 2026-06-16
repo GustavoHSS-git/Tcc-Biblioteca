@@ -105,6 +105,7 @@ function createCards() {
 	});
 }
 
+
 // ============================================
 //  CRIAR DOTS DINAMICAMENTE
 // ============================================
@@ -117,7 +118,10 @@ function createDots() {
 		dotsContainer.appendChild(dot);
 	});
 }
-
+function lerLivro(book) {
+  if (!book || !book.id) return console.warn('Livro inválido para leitura');
+  window.location.href = `/dadoslivros/?id=${encodeURIComponent(book.id)}`;
+}
 // ============================================
 //  ATUALIZAR CARROSSEL
 // ============================================
@@ -188,6 +192,13 @@ function attachEventListeners() {
 		else if (e.key === "ArrowRight") updateCarousel(currentIndex + 1);
 	});
 
+	document.querySelectorAll(".btn-read").forEach((button) => {
+  		button.addEventListener("click", (e) => {
+    	e.stopPropagation();
+    	currentIndex = Number(button.closest(".card").dataset.index);
+    	lerLivro(books[currentIndex]);
+  		});
+	});
 	// Touch/Swipe
 	let touchStartX = 0;
 	document.addEventListener("touchstart", (e) => {
