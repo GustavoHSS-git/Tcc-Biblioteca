@@ -10,19 +10,6 @@ O projeto consiste em uma livraria digital inspirada na plataforma Steam, com fo
 
 A proposta tem como objetivo facilitar o acesso das pessoas ao consumo de livros de forma moderna, intuitiva e acessível. A plataforma busca resolver dificuldades relacionadas ao acesso a obras literárias, quadrinhos e outras publicações, além de oferecer um espaço para que autores independentes possam expor seus trabalhos, promovendo o conhecimento de novas obras e incentivando a leitura.
 
-## 🏗️ Estrutura do Projeto
-
-```
-├── inicial/          # Página inicial da aplicação
-├── Login/            # Sistema de autenticação
-├── biblioteca/       # Catálogo principal da biblioteca
-├── dadoslivros/      # Detalhes dos livros
-├── leitura/          # Interface de leitura
-├── loja/             # Seção de compra/vendas
-├── fotos/            # Imagens e recursos
-├── api/              # APIs e dados
-└── README.md         # Este arquivo
-```
 
 ## 🚀 Como Começar
 
